@@ -25,17 +25,18 @@ class Peer():
 
 class Txn():
     #TxnID: IDx pays IDy C coins
-    def __init__(self, id, peerX, peerY, coins) -> None:
+    def __init__(self, id, peerX, peerY, coins, case) -> None:
         self.txnId = id
         self.peerX = peerX
         self.peerY = peerY
         self.coins = coins
+        self.case = case
         self.size = 1
 
-    def __repr__(self, case) -> str:
-        if(case==1):
+    def __repr__(self) -> str:
+        if(self.case==1):
             return self.txnId+": "+self.peerX+" pays "+self.peerY+" "+self.coins+" coins"
-        if(case==2):
+        if(self.case==2):
            return self.txnId+": "+self.peerX+" mines "+self.coins+" coins" 
 
 #consists of no of peers and peers array
