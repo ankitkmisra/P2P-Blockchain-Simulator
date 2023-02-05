@@ -211,3 +211,17 @@ sim = Simulate(peers, z0, z1, Ttx, I, N)
 
 #how to make sure blockchain is within peer ie blocks arrival time is for particular peer and not centralised
 #make sure simulation is in perspective of each peer and not global
+
+#todo
+"""
+loopless block transmit
+block execution point 7 properly
+utxo per block event to be maintained
+visualisation tree yada yada
+report overleaf :')
+chain adding to peer and writing that to file
+adding txn in block and its limit
+broadcast condition on block
+fork resolution - longest chain?
+around 45 done 11 remaining (+ report 44)
+"""
