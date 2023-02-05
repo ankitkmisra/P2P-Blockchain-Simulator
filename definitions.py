@@ -14,9 +14,13 @@ class Peer():
         self.neighbors = [] #adjacent peers
         self.coins = 0
         self.hashpower = 0
-        self.blockchain = Blockchain() #init blobkchain with genesis, stores data such as arrival time of a block, block data, the tree, write to file func
-
-
+        self.blockchain = self.longestChain() #init blobkchain with genesis, stores data such as arrival time of a block, block data, the tree, write to file func
+        self.tree = []
+    
+    def longestChain():#how will we get the blockchain here? extend the self.blockchain here
+        pass
+    
+#txn and coinbase txn both
 class Txn():
     #TxnID: IDx pays IDy C coins
     def __init__(self, id, peerX, peerY, coins, case) -> None:
@@ -74,15 +78,15 @@ class Network():
             self.peers[peerY].neighbors.append(peerX) #connecting 2 peers
 
 class Block():
-    def __init__(self, id, peer) -> None:
+    def __init__(self, id, peer, txn, time, prev) -> None:
         self.id = id
         self.peer = peer
         self.size = 1 #kb min when empty
-        self.txn = []
-
-class Blockchain():
-    def __init__(self) -> None:
-        pass
+        self.txn = txn
+        self.coinbase = txn
+        self.coins = 0
+        self.time = time
+        self.prevBlock = prev
 
 class PoW():
     def __init__(self) -> None:
@@ -91,7 +95,6 @@ class PoW():
 class Simulate():
     def __init__(self, n, z0, z1, Ttx) -> None:
         self.net = Network(n, z0, z1) #n and peers
-        self.Bqueue = [] #blockqueue sorted by timestamp
         self.eventQ = [] #event queue sorted by timestamp, of txns
         self.pij = [[0 for i in range(n)] for j in range(n)] #0 if self to self prop
         self.txnId=0 #start with 0
@@ -107,37 +110,41 @@ class Simulate():
             return True
         return False
 
-    #call at interarrival time////need to simulate peerY and coins randomly
-    #2 types of txn event: generation and forwarded
-    #loopless how??
-    def actionTxn(self, event):
-        if(event[4]=="gen"): #generate single txn at random time by a peer 
-            _, peerX, peerY, coins, _ = event
+    #2 types of event: generation and forwarded for blocks and transactions
+    def pushEvent(self, event):
+        if(event[4]=="txnGen"): #generate single txn at random time by a peer 
+            _, peerX, peerY, coins, _, _ = event
             if(self.isValidPeer(peerX) and self.net.peers[peerX].coins>=coins and self.isValidPeer(peerY)):
                 txn = Txn(self.txnId, peerX, peerY, coins, 1) #txn generated to put into recieve queue
                 self.txnId+=1
                 self.net.peers[peerX].coins-=coins #sender
                 self.net.peers[peerY].coins+=coins #reciever
                 for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
-                    self.eventQ.append([self.time+self.latency(peerX, i, len(repr(txn))), peerX, i, txn, "fowd"]) #should it be len(msg) or 1kb of txn???
+                    self.eventQ.append([self.time+self.latency(peerX, i, 1024), peerX, i, txn, "fowd", "txn"]) #size of txn is 1kb hence m=1kb
                 
                 #next txn to be generated
                 peerY = random.randint(0, self.n)
                 coins = random.uniform(0, self.net.peers[peerX].coins) #coz float
-                self.eventQ.append([self.time, peerX, peerY, coins, "gen"]) #txn to send
-                self.sortQ()
-        elif(event[4]=="recv"):
-            pass #make sure not to send back or send again
-    
-    def actionBlk(self, event):
-        if(event[4]=="gen"): #generate single txn at random time by a peer 
-            pass
-        elif(event[4]=="recv"):
+                self.eventQ.append([self.time, peerX, peerY, coins, "gen", "txn"]) #txn to send
+
+        elif(event[4]=="txnFowd"):
+            _, peerX, peerY, txn, _ = event
+            for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
+                    if(i!=peerY):
+                        self.eventQ.append([self.time+self.latency(peerX, i, 1024), peerX, i, txn, "fowd", "txn"]) #size of txn is 1kb hence m=1kb
+            pass #make sure not to send back or send again - loopless
+
+        elif(event[4]=="blkGen"):
             pass
         
+        elif(event[4]=="blkFowd"):
+            pass
+
+    def runEvent():
+        pass
+    
     def sortQ(self):
         self.eventQ = sorted(self.eventQ)
-        print(self.eventQ)
 
     def latency(self, peerX, peerY, m): # hold for time t before sending a block -> representing network latency
         if(self.net.peers[peerX].speed=="fast" and self.net.peers[peerY].speed=="fast"):
@@ -147,6 +154,16 @@ class Simulate():
         dij = random.expovariate(96/cij)
         return self.pij[peerX][peerY]+m/cij+dij
 
+    def hashPower(self, peerX):
+        if(self.net.peers[peerX].speed=="high CPU”"):
+            pass
+        else:
+            pass
+
 sim = Simulate(10, 0.5, 0.5, 10)
-sim.actionTxn([0,1,0,0,"gen"])
+sim.actionEvent([0,1,0,0,"gen", "txn"])
 #print(np.average([sim.latency(0, 1, 300000) for i in range(1000)]))
+
+
+#how to make sure blockchain is within peer ie blocks arrival time is for particular peer and not centralised
+#make sure simulation is in perspective of each peer and not global
