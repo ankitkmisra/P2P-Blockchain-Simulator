@@ -196,13 +196,15 @@ class Simulate():
         dij = random.expovariate(cij/96)
         return self.pij[peerX][peerY]+m/cij+dij
 
+
 Ttx=0.1 #interarrival time of txns
-samples = 10
+peers = 10
 I = 1 #interarrival time of blocks
 z0=0.5
 z1=0.5
+N = 100 #no of events
 
-sim = Simulate(samples, z0, z1, Ttx, I, 100)
+sim = Simulate(peers, z0, z1, Ttx, I, N)
 #sim.pushEvent([0,1,0,0,"txnGen"])
 #print(np.average([sim.latency(0, 1, 300000) for i in range(1000)]))
 
