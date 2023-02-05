@@ -3,7 +3,6 @@ import random, numpy as np
 Ttx=10
 samples = 10
 Tk = 3
-interarrival = random.expovariate(Ttx)
 
 class Peer():
     def __init__(self, id, speed, cpu) -> None:
@@ -78,15 +77,15 @@ class Network():
             self.peers[peerY].neighbors.append(peerX) #connecting 2 peers
 
 class Block():
-    def __init__(self, id, peer, txn, time, prev) -> None:
+    def __init__(self, id, peer, prev, txn, createdAt, coinbase) -> None:
         self.id = id
         self.peer = peer
         self.size = 1 #kb min when empty
         self.txn = txn
-        self.coinbase = txn
         self.coins = 0
-        self.time = time
-        self.prevBlock = prev
+        self.coinbase = coinbase
+        self.createdAt = createdAt
+        self.prev = prev #prev block
 
 class PoW():
     def __init__(self) -> None:
@@ -98,6 +97,7 @@ class Simulate():
         self.eventQ = [] #event queue sorted by timestamp, of txns
         self.pij = [[0 for i in range(n)] for j in range(n)] #0 if self to self prop
         self.txnId=0 #start with 0
+        self.blkId=0 #start with 0
         self.time=0 #at simulation start time=0
         self.n = n
         for i in range(n): #prop delay
@@ -110,37 +110,58 @@ class Simulate():
             return True
         return False
 
-    #2 types of event: generation and forwarded for blocks and transactions
+    #4 types of event: generation and forwarded for blocks and transactions
     def pushEvent(self, event):
         if(event[4]=="txnGen"): #generate single txn at random time by a peer 
-            _, peerX, peerY, coins, _, _ = event
+            time, peerX, peerY, coins, _ = event #array of items
+            #global track of coins here but if we keep it block wise the validation will be consistant with fork
             if(self.isValidPeer(peerX) and self.net.peers[peerX].coins>=coins and self.isValidPeer(peerY)):
                 txn = Txn(self.txnId, peerX, peerY, coins, 1) #txn generated to put into recieve queue
                 self.txnId+=1
-                self.net.peers[peerX].coins-=coins #sender
-                self.net.peers[peerY].coins+=coins #reciever
                 for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
-                    self.eventQ.append([self.time+self.latency(peerX, i, 1024), peerX, i, txn, "fowd", "txn"]) #size of txn is 1kb hence m=1kb
+                    self.eventQ.append([time+self.latency(peerX, i, 1024), peerX, i, txn, "txnFowd"]) #size of txn is 1kb hence m=1kb
                 
                 #next txn to be generated
                 peerY = random.randint(0, self.n)
                 coins = random.uniform(0, self.net.peers[peerX].coins) #coz float
-                self.eventQ.append([self.time, peerX, peerY, coins, "gen", "txn"]) #txn to send
+                self.eventQ.append([time+random.expovariate(Ttx), peerX, peerY, coins, "txnGen"]) #txn to send Ttx
 
         elif(event[4]=="txnFowd"):
-            _, peerX, peerY, txn, _ = event
+            time, peerX, peerY, txn, _ = event
             for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
                     if(i!=peerY):
-                        self.eventQ.append([self.time+self.latency(peerX, i, 1024), peerX, i, txn, "fowd", "txn"]) #size of txn is 1kb hence m=1kb
+                        self.eventQ.append([time+self.latency(peerX, i, 1024), peerX, i, txn, "txnFowd"]) #size of txn is 1kb hence m=1kb
             pass #make sure not to send back or send again - loopless
 
         elif(event[4]=="blkGen"):
-            pass
-        
+            time, peerX, prev, txn, _ = event #items needed add here
+            if(self.isValidPeer(peerX) and self.net.peers[peerX].coins>=coins and self.isValidPeer(peerY)):
+                coinbase = Txn(self.txnId, peerX, -1, 50, 2)
+                self.txnId+=1
+                blk = Block(self.blkId, peerX, prev, txn, time, coinbase) #txn generated to put into recieve queue
+                self.blkId+=1
+                for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
+                    self.eventQ.append([time+self.latency(peerX, i, 1024), peerX, i, blk, "blkFowd"]) #size of txn is 1kb hence m=1kb
+                
+                #next txn to be generated
+                self.eventQ.append([time+random.expovariate(Tk), peerX, blk, txn, "blkGen"]) #txn to send
+
         elif(event[4]=="blkFowd"):
+            time, peerX, peerY, blk, _ = event
+            for i in self.net.peers[peerX].neighbors: #sending my generated txn to my neighbors
+                    if(i!=peerY):
+                        self.eventQ.append([time+self.latency(peerX, i, 1024), peerX, i, blk, "blkFowd"]) #size of txn is 1kb hence m=1kb
             pass
 
-    def runEvent():
+    def runEvent(self, until):
+        ev_count = 1
+        self.sortQ()
+        
+        while ev_count <= until:
+            ev = self.eventQ[0]
+            self.curr_time = ev[0]
+            self.pushEvent(self)
+            ev_count += 1
         pass
     
     def sortQ(self):
@@ -161,7 +182,7 @@ class Simulate():
             pass
 
 sim = Simulate(10, 0.5, 0.5, 10)
-sim.actionEvent([0,1,0,0,"gen", "txn"])
+sim.pushEvent([0,1,0,0,"txnGen"])
 #print(np.average([sim.latency(0, 1, 300000) for i in range(1000)]))
 
 
