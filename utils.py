@@ -1,4 +1,4 @@
-import heapq
+import heapq, random
 from numpy.random import default_rng
 
 rng = default_rng(42)
@@ -39,13 +39,13 @@ def initLatency(n):         # initializing a 2d array for rho
     global rho
     rho = rng.uniform(10, 500, [n, n])
 
-def computeLatency(i, j, m):  # computing the latency by taking both nodes and size of message
-    lat = rho[i.nid][j.nid]
-    c = 5.0
-    if i.speed == 1 and j.speed == 1:
-        c = 100.0
-    lat += m/c + rng.exponential(96.0/c)
-    return lat
+def computeLatency(peerX, peerY, m):  # computing the latency by taking both nodes and size of message
+    if(peerX.speed=="fast" and peerY.speed=="fast"):
+            cij = 100 #mb 
+    else:
+        cij = 5
+    dij = random.expovariate(cij/96)#msec
+    return rho[peerX.nid][peerY.nid]+m/cij+dij
 
 # a helper function to push an event into the event queue
 def pushq(event):

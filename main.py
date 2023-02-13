@@ -5,8 +5,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 
-from utils.definitions import Node, Block, Event, Transaction
-from utils.utils import blkIdGen, txnIdGen, initLatency, eventq
+from definitions import Node, Block, Event, Transaction
+from utils import blkIdGen, txnIdGen, initLatency, eventq
 
 rng = default_rng(42)
 
@@ -95,10 +95,11 @@ class Simulation:
                 pbid=self.gblock,
                 bid=next(self.blkid_generator),
                 txnIncluded=set([Transaction(
-                    sender=-1,
-                    tid=next(self.txnid_generator),
-                    receiver=p,
-                    value=50
+                    peerX=-1,
+                    id=next(self.txnid_generator),
+                    peerY=p,
+                    value=50,
+                    case=2
                 )]),
                 miner=p
             )
@@ -109,10 +110,10 @@ class Simulation:
             t = rng.exponential(self.ttx)
             while(t < max_time):
                 elem = Transaction(
-                    sender=p,
-                    tid = next(self.txnid_generator),
-                    receiver = self.nodes[np.random.randint(0,len(self.nodes))],
-                    value = 0
+                    peerX=p,
+                    id = next(self.txnid_generator),
+                    peerY = self.nodes[np.random.randint(0,len(self.nodes))],
+                    value = 0, case=1
                 )
                 heapq.heappush(eventq, (t, Event(t, "TxnGen", txn=elem)))
                 t = t + rng.exponential(self.ttx)
@@ -145,7 +146,7 @@ class Simulation:
         Calls the appropriate event handler for latest event
         """
         if event.event_type == "TxnGen":
-            event.txn.sender.txnSend(event)
+            event.txn.peerX.txnSend(event)
         elif event.event_type == "TxnRecv":
             event.receiver.txnRecv(event)
         elif event.event_type == "BlockRecv":
