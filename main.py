@@ -149,9 +149,9 @@ if __name__ == "__main__":
     percentage_slow=0.5
     percentage_lowcpu=0.5 
     mean_inter_arrival=10
-    average_block_mining_time=6000
+    average_block_mining_time=60
 
-    simulation_time=3
+    simulation_time=100
     simulator = Simulation(num_nodes, mean_inter_arrival, percentage_slow,
                            percentage_lowcpu, average_block_mining_time)
     

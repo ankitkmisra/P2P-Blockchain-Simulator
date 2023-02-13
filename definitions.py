@@ -32,36 +32,24 @@ class Block:
         self.size = 1 + len(txnIncluded) #size of block
         if pbid != 0: #to check if it is not genesis block
             # self.txnIncluded = copy.deepcopy(txnIncluded)
+            # txnPool stores all the txn mined till now 
+            # length shows the length of chain from genesis block till current block
             self.txnIncluded = txnIncluded
-        else:
-            self.txnIncluded = set()
-        self.miner = miner
-
-        # txnPool stores all the txn mined till now 
-        # length shows the length of chain from genesis block till current block 
-        if pbid != 0:
-            # self.txnPool = copy.deepcopy(pbid.txnPool)
             self.txnPool = pbid.txnPool
             self.length = pbid.length+1
-        else:
-            self.txnPool = set()
-            self.length = 1
-        
-        for a in txnIncluded:
-            self.txnPool.add(a)
-
-        if pbid != 0:
             self.balance = copy.deepcopy(pbid.balance)
         else:
+            self.txnIncluded = set()
+            self.txnPool = set()
+            self.length = 1
             self.balance = balance
+        self.miner = miner
+        
         for a in txnIncluded: #updating balance of all the user 
-            if a.peerX != -1:
+            if a.case == 1:
                 self.balance[a.peerX.nid] -= a.value
+            self.txnPool.add(a)
             self.balance[a.peerY.nid] += a.value
-            
-    def __str__ (self):
-        return f"Id:{self.bid},Parent:{self.pbid.bid}, Miner:{self.miner}, Txns:{len(self.txnIncluded)}, Time:{self.time}, Size:{self.size}"
-    
 
 class Node:
     blockChain = {} # blockchain of the node
