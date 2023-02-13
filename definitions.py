@@ -26,7 +26,7 @@ class Event:
 
 class Block:
     time=0
-    def __init__(self, bid, pbid, txnIncluded, miner):
+    def __init__(self, bid, pbid, txnIncluded, miner, balance=[]):
         self.bid = bid # block id
         self.pbid = pbid #parent block id
         self.size = 1 + len(txnIncluded) #size of block
@@ -53,7 +53,7 @@ class Block:
         if pbid != 0:
             self.balance = copy.deepcopy(pbid.balance)
         else:
-            self.balance = []
+            self.balance = balance
         for a in txnIncluded: #updating balance of all the user 
             if a.peerX != -1:
                 self.balance[a.peerX.nid] -= a.value
@@ -136,7 +136,7 @@ class Node:
         newBlock = Block(bid=newBlockId, pbid=block,
                          txnIncluded=txnToInclude, miner=self)
 
-        lat = lat + rng.exponential(self.miningTime)
+        lat = lat + rng.exponential(self.miningTime) #takes mean not lambda
         pushq(Event(lat, event_type="BlockMined", block=newBlock))
 
 
