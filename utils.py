@@ -20,13 +20,13 @@ def txnIdGen():
         i += 1
 
 def verifyBlock(cblock):
-    for a in cblock.txnIncluded:
-        if a.sender == -1:
+    for i in cblock.txnIncluded:
+        if i.sender == -1:
             return True
 
-        if cblock.pbid.balance[a.receiver.nid] + a.value != cblock.balance[a.receiver.nid] or \
-            cblock.pbid.balance[a.sender.nid] - a.value < 0 or \
-            cblock.pbid.balance[a.sender.nid] - a.value != cblock.balance[a.sender.nid]:
+        if cblock.pbid.balance[i.receiver.nid] + i.value != cblock.balance[i.receiver.nid] or \
+            cblock.pbid.balance[i.sender.nid] - i.value < 0 or \
+            cblock.pbid.balance[i.sender.nid] - i.value != cblock.balance[i.sender.nid]:
             return False
             
     return True

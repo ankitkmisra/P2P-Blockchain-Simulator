@@ -23,7 +23,7 @@ class Simulation:
         self.G = nx.Graph()
         self.G.add_nodes_from(range(n))
 
-        self.genesis = Block(pbid=0, bid=1, txnIncluded=set(), miner=-1, balance = [0]*n)
+        self.genesis = Block(pbid=0, bid=1, txnIncluded=set(), miner=None, balance = [0]*n)
 
         self.blkid_generator = blkIdGen()
         self.txnid_generator = txnIdGen()
@@ -106,21 +106,23 @@ class Simulation:
                 t = t + rng.exponential(self.ttx)
 
     def run(self, untill): #simulate untill
-        t = 0
-        while(t < untill and len(eventq)!=0):
-            t, event = heapq.heappop(eventq)
+        time = 0
+        while(time < untill and len(eventq) > 0):
+            time, event = heapq.heappop(eventq)
             self.handle(event)
         
         file=open("log_tree.txt","w+") #store in file
-        for a in self.nodes:
-            heading="*"*100+f"Id:{a.nid}"+"*"*100+"\n"
+        for i in self.nodes: #each node
+            heading=f"Data For Node Id:{i.nid}""\n"
             file.write(heading)
-            for _,block in a.blockChain.items():
-                if block.pbid == 0: 
-                    log_to_write=f"Id:{block.bid},Parent:{-1}, Miner:{block.miner}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+            for _,block in i.blockChain.items(): #each block
+                if block.pbid == 0: #genesis
+                    log_to_write=f"Block Id:{block.bid}, Parent ID:{None}, Miner ID:{None}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 else:
-                    log_to_write=f"Id:{block.bid},Parent:{block.pbid.bid}, Miner:{block.miner}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                    log_to_write=f"Block Id:{block.bid}, Parent ID:{block.pbid.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 file.write(log_to_write)
+            file.write("---X---\n\n")
+        file.close()
             
 
     def handle(self, event): #event handler - push to queue

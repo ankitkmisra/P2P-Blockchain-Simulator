@@ -1,60 +1,80 @@
-****************************************************************************************************Id:0****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:1****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:2****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:3****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:4****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:5****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:6****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:7****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:8****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
-****************************************************************************************************Id:9****************************************************************************************************
-Id:1,Parent:-1, Miner:-1, Txns:0, Time:0
-Id:3,Parent:1, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:26.167085070558002
-Id:16,Parent:3, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:54.69142697102242
-Id:22,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:1, Time:77.93540821429913
-Id:20,Parent:16, Miner:<definitions.Node object at 0x7fe53a1003a0>, Txns:2, Time:80.85851204158043
+Data For Node Id:0
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:1
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:2
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:3
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:4
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:5
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:6
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:7
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:8
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
+Data For Node Id:9
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:3, Parent ID:1, Miner ID:1, Txns:1, Time:26.167085070558002
+Block Id:16, Parent ID:3, Miner ID:1, Txns:1, Time:54.69142697102242
+Block Id:22, Parent ID:16, Miner ID:1, Txns:1, Time:77.93540821429913
+Block Id:20, Parent ID:16, Miner ID:1, Txns:2, Time:80.85851204158043
+---X---
+
