@@ -73,8 +73,8 @@ class Node:
 
     # genetares transactions
     def txnSend(self, event):
-        if self.blockChain[self.lbid].balance[self.nid] > 0:
-            event.txn.value = np.random.uniform(0, self.blockChain[self.lbid].balance[self.nid]+1)
+        event.txn.value = np.random.uniform(0, self.blockChain[self.lbid].balance[self.nid]+1)
+        if self.blockChain[self.lbid].balance[self.nid] > event.txn.value:
             self.txnReceived.add(event.txn) #add  recieved into set
             for i in self.peers:
                 t = event.time + computeLatency(peerX=self, peerY=i, m=1)
