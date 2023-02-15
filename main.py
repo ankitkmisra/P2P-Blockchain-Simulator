@@ -68,9 +68,7 @@ class Simulation:
                 l = rng.integers(4, 9)
                 #print(l)
                 while len(self.nodes[nodeX].peers) < l:
-                    nodes_choice = [j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers] 
-                    rng.shuffle(nodes_choice)
-                    nodeY = nodes_choice[0]
+                    nodeY = rng.choice([j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers]) 
                     if nodeY != nodeX:
                         self.connection(nodeX, nodeY)
                 #print(len(self.nodes[nodeX].peers))
