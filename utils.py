@@ -21,12 +21,12 @@ def txnIdGen():
 
 def verifyBlock(cblock):
     for i in cblock.txnIncluded:
-        if i.sender == -1:
+        if i.peerX == -1:
             return True
 
-        if cblock.pbid.balance[i.receiver.nid] + i.value != cblock.balance[i.receiver.nid] or \
-            cblock.pbid.balance[i.sender.nid] - i.value < 0 or \
-            cblock.pbid.balance[i.sender.nid] - i.value != cblock.balance[i.sender.nid]:
+        if cblock.pbid.balance[i.peerY.nid] + i.value != cblock.balance[i.peerY.nid] or \
+            cblock.pbid.balance[i.peerX.nid] - i.value < 0 or \
+            cblock.pbid.balance[i.peerX.nid] - i.value != cblock.balance[i.peerX.nid]:
             return False
             
     return True
@@ -38,11 +38,11 @@ def initLatency(n):         # initializing a 2d array for rho
 
 def computeLatency(peerX, peerY, m):  # computing the latency by taking both nodes and size of message
     if(peerX.speed=="fast" and peerY.speed=="fast"):
-            cij = 100 #mb 
+        cij = 100 #mb 
     else:
         cij = 5
     dij = random.expovariate(cij/96)#msec
-    return rho[peerX.nid][peerY.nid]+m/cij+dij
+    return rho[peerX.nid][peerY.nid] + m/cij + dij
 
 # a helper function to push an event into the event queue
 def pushq(event):

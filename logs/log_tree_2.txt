@@ -1,0 +1,19 @@
+Data For Node Id: 2
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:5, Parent ID:1, Miner ID:3, Txns:1, Time:30430931.733286593
+Block Id:16, Parent ID:5, Miner ID:3, Txns:1, Time:77971490.23446414
+Block Id:39, Parent ID:16, Miner ID:9, Txns:1, Time:120364239.43018185
+Block Id:60, Parent ID:39, Miner ID:2, Txns:1, Time:296879422.70838803
+Block Id:80, Parent ID:60, Miner ID:2, Txns:14, Time:321328600.4495156
+Block Id:71, Parent ID:63, Miner ID:9, Txns:1, Time:334151068.72376853
+Block Id:109, Parent ID:71, Miner ID:3, Txns:1, Time:375807442.2691504
+Block Id:136, Parent ID:109, Miner ID:2, Txns:1, Time:414614264.08017135
+Block Id:140, Parent ID:136, Miner ID:2, Txns:555, Time:439826811.5387405
+Block Id:151, Parent ID:136, Miner ID:6, Txns:1, Time:548649008.5988517
+Block Id:153, Parent ID:140, Miner ID:2, Txns:37, Time:597260455.294396
+Block Id:187, Parent ID:153, Miner ID:2, Txns:5, Time:699579757.0005169
+Block Id:175, Parent ID:161, Miner ID:6, Txns:3, Time:722828723.8343552
+Block Id:197, Parent ID:175, Miner ID:6, Txns:10, Time:772738409.7478797
+Block Id:222, Parent ID:197, Miner ID:2, Txns:1, Time:932501579.4544915
+Block Id:248, Parent ID:222, Miner ID:2, Txns:333, Time:965719166.0126907
+Block Id:268, Parent ID:248, Miner ID:2, Txns:12, Time:998139732.6858933

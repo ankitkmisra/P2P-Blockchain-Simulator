@@ -52,15 +52,12 @@ class Block:
             self.balance[i.peerY.nid] += i.value
 
 class Node:
-    peers = set() # neighbours of the node
-    blockChain = {} # blockchain of the node
-    blockReceived = set() # blocks received till now 
-    txnReceived = set() # txn received till now 
-    
-    g = nx.DiGraph() # graph
-
-
     def __init__(self, nid, speed, cpu, genesis, miningTime, blkgen, txngen):
+        self.peers = set() # neighbours of the node
+        self.blockChain = {} # blockchain of the node
+        self.blockReceived = set() # blocks received till now 
+        self.txnReceived = set() # txn received till now 
+        self.g = nx.DiGraph() # graph
         self.nid = nid # unique id of the node 
         self.speed = speed # 1=fast, 0=slow
         self.cpu = cpu
@@ -71,7 +68,7 @@ class Node:
         self.miningTime = miningTime # avg interarrival time/hashpower
         self.txnid_generator = txngen
 
-    # genetares transactions
+    # generates transactions
     def txnSend(self, event):
         event.txn.value = np.random.uniform(0, self.blockChain[self.lbid].balance[self.nid]+1)
         if self.blockChain[self.lbid].balance[self.nid] > event.txn.value:
@@ -95,7 +92,7 @@ class Node:
         remaingTxn = self.txnReceived.difference(block.txnPool)
         toBeDeleted = set()
 
-        _= [toBeDeleted.add(i) for i in remaingTxn if i.value > block.balance[i.peerX.nid]]
+        _ = [toBeDeleted.add(i) for i in remaingTxn if i.value > block.balance[i.peerX.nid]]
         remaingTxn = remaingTxn.difference(toBeDeleted)
         numTxn = len(remaingTxn)
         
@@ -108,6 +105,7 @@ class Node:
         txnToInclude.add(coinBaseTxn)
 
         newBlockId = next(self.blkid_generator)
+        # print(newBlockId)
         newBlock = Block(bid=newBlockId, pbid=block,
                          txnIncluded=txnToInclude, miner=self)
 
@@ -122,7 +120,7 @@ class Node:
     def verifyAndAddReceivedBlock(self, event):
         if event.block.bid not in self.blockReceived:
             self.blockReceived.add(event.block.bid)
-            if verifyBlock(event.block):
+            if not verifyBlock(event.block):
                 return
 
             event.block.time = event.time
@@ -142,6 +140,9 @@ class Node:
     # node waits a block whose addition will, create primary chain
     def receiveSelfMinedBlock(self, event):
         event.block.time = event.time
+
+        if event.block.length <= self.blockChain[self.lbid].length:
+            return
 
         self.blockChain[event.block.bid] = event.block
         self.g.add_edge(event.block.bid, event.block.pbid.bid)

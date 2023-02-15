@@ -4,6 +4,9 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
+import argparse
+import os
+import shutil
 
 from definitions import Node, Block, Event, Transaction
 from utils import blkIdGen, txnIdGen, initLatency, eventq
@@ -36,7 +39,7 @@ class Simulation:
         #hashing power
         invh0 = n*(10 - 9*z1)
         invh1 = invh0/10
-        miningTime = [I*invh0 if cpu[i] == 0 else I*invh1 for i in range(n)]
+        miningTime = [I*invh0 if cpu[i] == "low CPU" else I*invh1 for i in range(n)]
 
         print(miningTime)
         
@@ -111,18 +114,17 @@ class Simulation:
             time, event = heapq.heappop(eventq)
             self.handle(event)
         
-        file=open("log_tree.txt","w+") #store in file
         for i in self.nodes: #each node
-            heading=f"Data For Node Id:{i.nid}""\n"
+            file = open(f'./logs/log_tree_{i.nid}.txt', 'w+') #store in file
+            heading = f'Data For Node Id: {i.nid}\n'
             file.write(heading)
-            for _,block in i.blockChain.items(): #each block
+            for _, block in i.blockChain.items(): #each block
                 if block.pbid == 0: #genesis
-                    log_to_write=f"Block Id:{block.bid}, Parent ID:{None}, Miner ID:{None}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                    log_to_write = f"Block Id:{block.bid}, Parent ID:{None}, Miner ID:{None}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 else:
-                    log_to_write=f"Block Id:{block.bid}, Parent ID:{block.pbid.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                    log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pbid.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 file.write(log_to_write)
-            file.write("---X---\n\n")
-        file.close()
+            file.close()
             
 
     def handle(self, event): #event handler - push to queue
@@ -135,33 +137,61 @@ class Simulation:
         elif event.event_type == "BlockMined":
             event.block.miner.receiveSelfMinedBlock(event)
 
-    def draw_bc(self, nid):
-        # draw network with planar layout
-        nx.draw(self.nodes[nid].g, pos=nx.planar_layout(self.nodes[nid].g), node_size=10, node_color='red')
-        # nx.draw(self.nodes[nid].g, node_size=10, node_color='red')
-        plt.show()
+    def draw_bc(self, nid, save=False):
+        plt.figure()
+        # draw network with Kamada Kawai layout
+        nx.draw(self.nodes[nid].g, with_labels=True, pos=nx.kamada_kawai_layout(self.nodes[nid].g), node_size=10, node_color='red')
+        if save:
+            plt.savefig(f'./figures/blockchain_{nid}.png')
+        else:
+            plt.show()
 
-    def print_graph(self): #print graph       
-        nx.draw(self.G)
-        plt.show()
+    def print_graph(self, save=False): #print graph     
+        plt.figure()
+        nx.draw(self.G, with_labels=True)
+        if save:
+            plt.savefig('./figures/network_graph.png')
+        else:
+            plt.show()
             
 
 if __name__ == "__main__":
-    num_nodes=10
-    percentage_slow=0.5
-    percentage_lowcpu=0.5 
-    mean_inter_arrival=10
-    average_block_mining_time=60
+    parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
+    parser.add_argument('-n', '--num_nodes', default=10, type=int, help='number of nodes in the P2P network')
+    parser.add_argument('-z0', '--percentage_slow', default=0.5, type=float, help='percentage of slow nodes')
+    parser.add_argument('-z1', '--percentage_lowcpu', default=0.5, type=float, help='percentage of nodes having low CPU power')
+    parser.add_argument('-ttx', '--mean_inter_arrival', default=10, type=float, help='mean inter-arrival time between transactions')
+    parser.add_argument('-I', '--average_block_mining_time', default=600, type=float, help='average time taken to mine a block')
+    parser.add_argument('-T', '--simulation_time', default=10000, type=float, help='total time for which the P2P network is simulated')
+    parser.add_argument('-s', '--save_figures', default=False, action='store_true', help='use this flag to save all figures generated in ./figures')
 
-    simulation_time=100
+    args = parser.parse_args()
+
+    num_nodes = args.num_nodes
+    percentage_slow = args.percentage_slow
+    percentage_lowcpu = args.percentage_lowcpu
+    mean_inter_arrival = args.mean_inter_arrival
+    average_block_mining_time = args.average_block_mining_time
+    simulation_time = args.simulation_time
+    save_figures = args.save_figures
+
+    if os.path.exists('./logs'):
+        shutil.rmtree('./logs')
+    os.mkdir('./logs')
+
+    if save_figures:
+        if os.path.exists('./figures'):
+            shutil.rmtree('./figures')
+        os.mkdir('./figures')
+
     simulator = Simulation(num_nodes, mean_inter_arrival, percentage_slow,
                            percentage_lowcpu, average_block_mining_time)
     
     simulator.generate_network()
-    simulator.print_graph()
+    simulator.print_graph(save=save_figures)
     simulator.gen_all_txn(simulation_time)
     simulator.run(simulation_time)
 
     # draw blockchain
     for i in range(num_nodes):
-        simulator.draw_bc(i)
+        simulator.draw_bc(i, save=save_figures)
