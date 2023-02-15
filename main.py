@@ -133,7 +133,7 @@ class Simulation:
                 if block.pb != 0: #if parent and miner exists
                     parent = block.pb.bid
                     miner = block.miner.nid
-                log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pb.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                log_to_write = f"Block Id:{block.bid}, Parent ID:{parent}, Miner ID:{miner}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 file.write(log_to_write)
             file.close()
             
