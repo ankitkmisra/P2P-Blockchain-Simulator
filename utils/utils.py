@@ -1,12 +1,20 @@
-import heapq, random
-from numpy.random import default_rng
+import heapq
+from utils.seed import rng
 
-rng = default_rng(42)
+__all__ = ["blkIdGen",
+           "txnIdGen",
+           "verifyBlock",
+           "initLatency",
+           "computeLatency",
+           "pushq",
+           "eventq",
+           "rho"]
+
 
 rho = None # rho is the global latency matrix
 eventq = [] # eventq is the global event queue
 
-
+## Generators for block and transaction ids ##
 def blkIdGen():
     i = 2 # genesis block is 1, and parent block of genesis is 0
     while True:
@@ -19,19 +27,20 @@ def txnIdGen():
         yield i
         i += 1
 
+## Block Verification ##
 def verifyBlock(cblock):
     for i in cblock.txnIncluded:
         if i.peerX == -1:
             return True
 
-        if cblock.pbid.balance[i.peerY.nid] + i.value != cblock.balance[i.peerY.nid] or \
-            cblock.pbid.balance[i.peerX.nid] - i.value < 0 or \
-            cblock.pbid.balance[i.peerX.nid] - i.value != cblock.balance[i.peerX.nid]:
+        if cblock.pb.balance[i.peerY.nid] + i.value != cblock.balance[i.peerY.nid] or \
+            cblock.pb.balance[i.peerX.nid] - i.value < 0 or \
+            cblock.pb.balance[i.peerX.nid] - i.value != cblock.balance[i.peerX.nid]:
             return False
             
     return True
 
-
+## Latency Matrix ##
 def initLatency(n):         # initializing a 2d array for rho
     global rho
     rho = rng.uniform(10, 500, [n, n])
@@ -41,9 +50,9 @@ def computeLatency(peerX, peerY, m):  # computing the latency by taking both nod
         cij = 100 #mb 
     else:
         cij = 5
-    dij = random.expovariate(cij/96)#msec
+    dij = rng.exponential(96/cij) #msec
     return rho[peerX.nid][peerY.nid] + m/cij + dij
 
-# a helper function to push an event into the event queue
+## a helper function to push an event into the event queue ##
 def pushq(event):
     heapq.heappush(eventq, (event.time, event))

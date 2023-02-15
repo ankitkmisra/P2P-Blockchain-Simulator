@@ -1,12 +1,9 @@
 import copy
-import numpy as np 
 import networkx as nx
-from random import sample
-from numpy.random import default_rng
 
+from utils.seed import rng
 from utils import verifyBlock, computeLatency, pushq
 
-rng = default_rng(42)
 
 class Event:
     """
@@ -25,19 +22,19 @@ class Event:
     
 
 class Block:
-    def __init__(self, bid, pbid, txnIncluded, miner, balance=[]):
+    def __init__(self, bid, pb, txnIncluded, miner, balance=[]):
         self.bid = bid # block id
-        self.pbid = pbid #parent block id
+        self.pb = pb #parent block id
         self.time = 0
         self.size = 1 + len(txnIncluded) #size of block
-        if pbid != 0: #to check if it is not genesis block
+        if pb != 0: #to check if it is not genesis block
             # self.txnIncluded = copy.deepcopy(txnIncluded)
             # txnPool stores all the txn mined till now 
             # length shows the length of chain from genesis block till current block
             self.txnIncluded = txnIncluded
-            self.txnPool = pbid.txnPool
-            self.length = pbid.length+1
-            self.balance = copy.deepcopy(pbid.balance)
+            self.txnPool = pb.txnPool
+            self.length = pb.length+1
+            self.balance = copy.deepcopy(pb.balance)
         else:
             self.txnIncluded = set()
             self.txnPool = set()
@@ -70,7 +67,10 @@ class Node:
 
     # generates transactions
     def txnSend(self, event):
-        event.txn.value = np.random.uniform(0, self.blockChain[self.lbid].balance[self.nid]+1)
+        if self.blockChain[self.lbid].balance[self.nid] < 1e-8: 
+            #if balance is less than 1e-8 then no txn is generated
+            return
+        event.txn.value = rng.uniform(0, self.blockChain[self.lbid].balance[self.nid])
         if self.blockChain[self.lbid].balance[self.nid] > event.txn.value:
             self.txnReceived.add(event.txn) #add  recieved into set
             for i in self.peers:
@@ -96,16 +96,16 @@ class Node:
         numTxn = len(remaingTxn)
         
         if numTxn > 1:
-            numTxn = min(np.random.randint(1, numTxn), 1022) # 1 for coinbase txn, 1 for itself
+            numTxn = min(rng.integers(1, numTxn), 1023) # 1 for coinbase txn, 1 for itself
 
-        txnToInclude = set(sample(remaingTxn, numTxn))
+        txnToInclude = set(rng.choice(list(remaingTxn), numTxn))
         txnId = next(self.txnid_generator)
         coinBaseTxn = Transaction(id=txnId, peerX=-1, peerY=self, value=50, case=2)
         txnToInclude.add(coinBaseTxn)
 
         newBlockId = next(self.blkid_generator)
         # print(newBlockId)
-        newBlock = Block(bid=newBlockId, pbid=block,
+        newBlock = Block(bid=newBlockId, pb=block,
                          txnIncluded=txnToInclude, miner=self)
 
         lat = lat + rng.exponential(self.miningTime) #takes mean not lambda
@@ -124,7 +124,7 @@ class Node:
 
             event.block.time = event.time
             self.blockChain[event.block.bid] = event.block
-            self.g.add_edge(event.block.bid, event.block.pbid.bid)
+            self.g.add_edge(event.block.bid, event.block.pb.bid)
             if event.block.length > self.blockChain[self.lbid].length:
                 self.lbid = event.block.bid
                 self.mineNewBlock(block=event.block, lat=event.time)
@@ -146,7 +146,7 @@ class Node:
             return
 
         self.blockChain[event.block.bid] = event.block
-        self.g.add_edge(event.block.bid, event.block.pbid.bid)
+        self.g.add_edge(event.block.bid, event.block.pb.bid)
         
         self.blockReceived.add(event.block.bid)
 

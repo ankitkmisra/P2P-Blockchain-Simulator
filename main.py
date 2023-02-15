@@ -1,17 +1,19 @@
+import os
 import heapq
 import random
+import shutil
+import argparse
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from numpy.random import default_rng
-import argparse
-import os
-import shutil
 
-from definitions import Node, Block, Event, Transaction
+from utils.seed import rng, seeds
+np.random.seed(seeds["np.random.seed"])
+random.seed(seeds["random.seed"])
+
+from utils.definitions import Node, Block, Event, Transaction
 from utils import blkIdGen, txnIdGen, initLatency, eventq
 
-rng = default_rng(42)
 
 class Simulation:
     def __init__(self, n, ttx, z0, z1, I=600):
@@ -26,15 +28,15 @@ class Simulation:
         self.G = nx.Graph()
         self.G.add_nodes_from(range(n))
 
-        self.genesis = Block(pbid=0, bid=1, txnIncluded=set(), miner=None, balance = [0]*n)
+        self.genesis = Block(pb=0, bid=1, txnIncluded=set(), miner=None, balance = [0]*n)
 
         self.blkid_generator = blkIdGen()
         self.txnid_generator = txnIdGen()
         
         speed = ["slow" for i in range(int(n*z0))]+["fast" for i in range(n-int(n*z0))]
         cpu = ["low CPU" for i in range(int(n*z1))]+["high CPU" for i in range(n-int(n*z1))]
-        np.random.shuffle(speed)
-        np.random.shuffle(cpu)
+        rng.shuffle(speed)
+        rng.shuffle(cpu)
 
         #hashing power
         invh0 = n*(10 - 9*z1)
@@ -63,10 +65,12 @@ class Simulation:
                 node.peers = set()
             # generate random connections
             for nodeX in range(n):
-                l = random.randint(4, 8)
+                l = rng.integers(4, 9)
                 #print(l)
                 while len(self.nodes[nodeX].peers) < l:
-                    nodeY = random.choice([j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers])
+                    nodes_choice = [j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers] 
+                    rng.shuffle(nodes_choice)
+                    nodeY = nodes_choice[0]
                     if nodeY != nodeX:
                         self.connection(nodeX, nodeY)
                 #print(len(self.nodes[nodeX].peers))
@@ -82,7 +86,7 @@ class Simulation:
         for p in self.nodes:
             minetime = rng.exponential(p.miningTime)
             block2mine = Block( #genesis block
-                pbid=self.genesis,
+                pb=self.genesis,
                 bid=next(self.blkid_generator),
                 txnIncluded=set([Transaction(
                     peerX=-1,
@@ -102,7 +106,7 @@ class Simulation:
                 elem = Transaction(
                     peerX=p,
                     id = next(self.txnid_generator),
-                    peerY = self.nodes[np.random.randint(0,len(self.nodes))],
+                    peerY = self.nodes[rng.integers(0, len(self.nodes))],
                     value = 0, case=1
                 )
                 heapq.heappush(eventq, (t, Event(t, "TxnGen", txn=elem)))
@@ -119,10 +123,10 @@ class Simulation:
             heading = f'Data For Node Id: {i.nid}\n'
             file.write(heading)
             for _, block in i.blockChain.items(): #each block
-                if block.pbid == 0: #genesis
+                if block.pb == 0: #genesis
                     log_to_write = f"Block Id:{block.bid}, Parent ID:{None}, Miner ID:{None}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 else:
-                    log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pbid.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                    log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pb.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 file.write(log_to_write)
             file.close()
             
