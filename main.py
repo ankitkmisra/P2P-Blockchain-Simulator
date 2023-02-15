@@ -128,10 +128,12 @@ class Simulation:
             heading = f'Data For Node Id: {i.nid}\n'
             file.write(heading)
             for _, block in i.blockChain.items(): #each block
-                if block.pb == 0: #genesis
-                    log_to_write = f"Block Id:{block.bid}, Parent ID:{None}, Miner ID:{None}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
-                else:
-                    log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pb.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                parent = None
+                miner = None
+                if block.pb != 0: #genesis
+                    parent = block.pb.bid
+                    miner = block.miner.nid
+                log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pb.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
                 file.write(log_to_write)
             file.close()
             
