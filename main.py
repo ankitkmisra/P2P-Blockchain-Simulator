@@ -130,7 +130,7 @@ class Simulation:
             for _, block in i.blockChain.items(): #each block
                 parent = None
                 miner = None
-                if block.pb != 0: #genesis
+                if block.pb != 0: #if parent and miner exists
                     parent = block.pb.bid
                     miner = block.miner.nid
                 log_to_write = f"Block Id:{block.bid}, Parent ID:{block.pb.bid}, Miner ID:{block.miner.nid}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
