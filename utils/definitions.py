@@ -2,7 +2,7 @@ import copy
 import networkx as nx
 
 from utils.seed import rng
-from utils import verifyBlock, computeLatency, pushq
+from utils import verifyBlock, computeLatency, pushq, incr_blocks
 
 
 class Event:
@@ -64,6 +64,7 @@ class Node:
         self.blkid_generator = blkgen
         self.miningTime = miningTime # avg interarrival time/hashpower
         self.txnid_generator = txngen
+        self.created_blocks_own = 0
 
     # generates transactions
     def txnSend(self, event):
@@ -89,24 +90,28 @@ class Node:
 
     # new block generation
     def mineNewBlock(self, block, lat):
-        remaingTxn = self.txnReceived.difference(block.txnPool)
-        toBeDeleted = set([i for i in remaingTxn if i.value > block.balance[i.peerX.nid]])
+        while True:
+            remaingTxn = self.txnReceived.difference(block.txnPool)
+            toBeDeleted = set([i for i in remaingTxn if i.value > block.balance[i.peerX.nid]])
 
-        remaingTxn = remaingTxn.difference(toBeDeleted)
-        numTxn = len(remaingTxn)
-        
-        if numTxn > 1:
-            numTxn = min(rng.integers(1, numTxn), 1023) # 1 for coinbase txn, 1 for itself
+            remaingTxn = remaingTxn.difference(toBeDeleted)
+            numTxn = len(remaingTxn)
+            
+            if numTxn > 1:
+                numTxn = min(rng.integers(1, numTxn), 1023) # 1 for coinbase txn, 1 for itself
 
-        txnToInclude = set(rng.choice(list(remaingTxn), numTxn))
-        txnId = next(self.txnid_generator)
-        coinBaseTxn = Transaction(id=txnId, peerX=-1, peerY=self, value=50, case=2)
-        txnToInclude.add(coinBaseTxn)
+            txnToInclude = set(rng.choice(list(remaingTxn), numTxn))
+            txnId = next(self.txnid_generator)
+            coinBaseTxn = Transaction(id=txnId, peerX=-1, peerY=self, value=50, case=2)
+            txnToInclude.add(coinBaseTxn)
 
-        newBlockId = next(self.blkid_generator)
-        # print(newBlockId)
-        newBlock = Block(bid=newBlockId, pb=block,
-                         txnIncluded=txnToInclude, miner=self)
+            newBlockId = next(self.blkid_generator)
+            # print(newBlockId)
+            newBlock = Block(bid=newBlockId, pb=block,
+                            txnIncluded=txnToInclude, miner=self)
+            
+            if verifyBlock(newBlock):
+                break
 
         lat = lat + rng.exponential(self.miningTime) #takes mean not lambda
         pushq(Event(lat, event_type="BlockMined", block=newBlock))
@@ -142,20 +147,18 @@ class Node:
 
         if event.block.length <= self.blockChain[self.lbid].length:
             return
-        if not verifyBlock(event.block):
-            return
+
+        incr_blocks()
+        self.created_blocks_own += 1
 
         self.blockChain[event.block.bid] = event.block
         self.g.add_edge(event.block.bid, event.block.pb.bid)
-        
         self.blockReceived.add(event.block.bid)
-
-        if event.block.length > self.blockChain[self.lbid].length:
-            self.lbid = event.block.bid
-            for i in self.peers:
-                lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
-                pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
-                self.mineNewBlock(block=event.block, lat=event.time)
+        self.lbid = event.block.bid
+        for i in self.peers:
+            lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
+            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+            self.mineNewBlock(block=event.block, lat=event.time)
 
 
 class Transaction:

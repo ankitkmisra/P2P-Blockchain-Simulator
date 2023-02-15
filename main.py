@@ -12,7 +12,7 @@ np.random.seed(seeds["np.random.seed"])
 random.seed(seeds["random.seed"])
 
 from utils.definitions import Node, Block, Event, Transaction
-from utils import blkIdGen, txnIdGen, initLatency, eventq
+from utils import blkIdGen, txnIdGen, initLatency, eventq, get_blocks
 
 
 class Simulation:
@@ -34,16 +34,14 @@ class Simulation:
         self.txnid_generator = txnIdGen()
         
         speed = ["slow" for i in range(int(n*z0))]+["fast" for i in range(n-int(n*z0))]
-        cpu = ["low CPU" for i in range(int(n*z1))]+["high CPU" for i in range(n-int(n*z1))]
+        cpu = ["low" for i in range(int(n*z1))]+["high" for i in range(n-int(n*z1))]
         rng.shuffle(speed)
         rng.shuffle(cpu)
 
         #hashing power
         invh0 = n*(10 - 9*z1)
         invh1 = invh0/10
-        miningTime = [I*invh0 if cpu[i] == "low CPU" else I*invh1 for i in range(n)]
-
-        print(miningTime)
+        miningTime = [I*invh0 if cpu[i] == "low" else I*invh1 for i in range(n)]
         
         self.nodes = [None]*n
         for i in range(n):
@@ -53,6 +51,7 @@ class Simulation:
                                  txngen=self.txnid_generator)
 
         self.ttx = ttx
+        self.I = I
         initLatency(n)
 
     def generate_network(self): #p2p network connection
@@ -115,6 +114,10 @@ class Simulation:
         while(time < untill and len(eventq) > 0):
             time, event = heapq.heappop(eventq)
             self.handle(event)
+        while(len(eventq) > 0):
+            time, event = heapq.heappop(eventq)
+            if event.event_type in ["TxnRecv", "BlockRecv"]:
+                self.handle(event)
         
         for i in self.nodes: #each node
             file = open(f'./logs/log_tree_{i.nid}.txt', 'w+') #store in file
@@ -142,7 +145,7 @@ class Simulation:
     def draw_bc(self, nid, save=False):
         plt.figure()
         # draw network with Kamada Kawai layout
-        nx.draw(self.nodes[nid].g, with_labels=True, pos=nx.kamada_kawai_layout(self.nodes[nid].g), node_size=10, node_color='red')
+        nx.draw(self.nodes[nid].g, pos=nx.kamada_kawai_layout(self.nodes[nid].g), node_size=10, node_color='red')
         if save:
             plt.savefig(f'./figures/blockchain_{nid}.png')
         else:
@@ -155,7 +158,72 @@ class Simulation:
             plt.savefig('./figures/network_graph.png')
         else:
             plt.show()
-            
+
+    def print_stats(self):
+        nd = self.nodes[0]
+        genesis = 1
+
+        g_rev = nd.g.reverse()
+        succ = nx.dfs_successors(g_rev, source=genesis)
+        depth_from_root = {}
+        max_depth = {}
+        parent = {}
+        deepest_node = genesis
+
+        def dfs(u, par = None, dep = 0):
+            nonlocal g_rev, succ, depth_from_root, max_depth, parent, deepest_node
+            depth_from_root[u] = dep
+            max_depth[u] = dep
+            parent[u] = par
+            if dep > depth_from_root[deepest_node]:
+                deepest_node = u
+            if u not in succ:
+                return
+            for v in succ[u]:
+                dfs(v, u, dep + 1)
+                max_depth[u] = max(max_depth[u], max_depth[v])
+        dfs(genesis)
+
+        branches = []
+        while deepest_node != genesis:
+            child = deepest_node
+            deepest_node = parent[deepest_node]
+            for u in succ[deepest_node]:
+                if u != child:
+                    branches.append(max_depth[u] - depth_from_root[deepest_node])
+
+        node_type_successful = {}
+        node_type_blocks_mined = {}
+        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
+            node_type_successful[type] = 0
+            node_type_blocks_mined[type] = 0
+        mined_in_longest_chain = {}
+        for node in self.nodes:
+            mined_in_longest_chain[node.nid] = 0
+            node_type_blocks_mined[node.speed + '_' + node.cpu] += node.created_blocks_own
+        block = nd.blockChain[nd.lbid]
+        while block.bid != genesis:
+            mined_in_longest_chain[block.miner.nid] += 1
+            node_type_successful[block.miner.speed + '_' + block.miner.cpu] += 1
+            block = block.pb
+
+        print("Length of longest chain (including genesis block):", nd.blockChain[nd.lbid].length)
+        print("Total number of blocks mined:", get_blocks())
+        print("Fraction of mined blocks present in longest chain:", round((nd.blockChain[nd.lbid].length-1) / get_blocks(), 3))
+        print()
+        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
+            print(f"% blocks in longest chain mined by {type} node:", round(node_type_successful[type] / (nd.blockChain[nd.lbid].length-1), 2))
+        print()
+        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
+            if node_type_blocks_mined[type] == 0:
+                print(f"% blocks mined by {type} node that made it to longest chain: 0.0")
+            else:
+                print(f"% blocks mined by {type} node that made it to longest chain:", round(node_type_successful[type] / node_type_blocks_mined[type], 2))
+        print()
+        if len(branches) > 0:
+            print("Lengths of branches:", branches)
+            print("Average length of branch:", round(np.average(branches), 3))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
@@ -193,6 +261,7 @@ if __name__ == "__main__":
     simulator.print_graph(save=save_figures)
     simulator.gen_all_txn(simulation_time)
     simulator.run(simulation_time)
+    simulator.print_stats()
 
     # draw blockchain
     for i in range(num_nodes):

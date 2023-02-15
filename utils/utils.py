@@ -8,11 +8,14 @@ __all__ = ["blkIdGen",
            "computeLatency",
            "pushq",
            "eventq",
-           "rho"]
+           "rho",
+           "incr_blocks",
+           "get_blocks"]
 
 
 rho = None # rho is the global latency matrix
 eventq = [] # eventq is the global event queue
+created_blocks = 0
 
 ## Generators for block and transaction ids ##
 def blkIdGen():
@@ -56,3 +59,10 @@ def computeLatency(peerX, peerY, m):  # computing the latency by taking both nod
 ## a helper function to push an event into the event queue ##
 def pushq(event):
     heapq.heappush(eventq, (event.time, event))
+
+def incr_blocks():
+    global created_blocks
+    created_blocks += 1
+
+def get_blocks():
+    return created_blocks
