@@ -96,7 +96,7 @@ class Node:
         numTxn = len(remaingTxn)
         
         if numTxn > 1:
-            numTxn = min(rng.integers(1, numTxn), 1023) # 1 for coinbase txn, 1 for itself
+            numTxn = min(rng.integers(1, numTxn), 1023) 
 
         txnToInclude = set(rng.choice(list(remaingTxn), numTxn))
         txnId = next(self.txnid_generator)
@@ -104,7 +104,6 @@ class Node:
         txnToInclude.add(coinBaseTxn)
 
         newBlockId = next(self.blkid_generator)
-        # print(newBlockId)
         newBlock = Block(bid=newBlockId, pb=block,
                          txnIncluded=txnToInclude, miner=self)
 

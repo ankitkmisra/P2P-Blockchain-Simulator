@@ -14,7 +14,7 @@ random.seed(seeds["random.seed"])
 from utils.definitions import Node, Block, Event, Transaction
 from utils import blkIdGen, txnIdGen, initLatency, eventq
 
-
+#The discrete event simulator
 class Simulation:
     def __init__(self, n, ttx, z0, z1, I=600):
         """
@@ -25,14 +25,18 @@ class Simulation:
             z1: Percentage of low CPU nodes
             I: Average block mining time
         """
+        #building the connection graph of peers
         self.G = nx.Graph()
         self.G.add_nodes_from(range(n))
 
+        #genesis block
         self.genesis = Block(pb=0, bid=1, txnIncluded=set(), miner=None, balance = [0]*n)
 
+        #id generation
         self.blkid_generator = blkIdGen()
         self.txnid_generator = txnIdGen()
         
+        #speed and cpu as mentioned in the question
         speed = ["slow" for i in range(int(n*z0))]+["fast" for i in range(n-int(n*z0))]
         cpu = ["low CPU" for i in range(int(n*z1))]+["high CPU" for i in range(n-int(n*z1))]
         rng.shuffle(speed)
@@ -52,7 +56,7 @@ class Simulation:
                                  blkgen=self.blkid_generator,
                                  txngen=self.txnid_generator)
 
-        self.ttx = ttx
+        self.ttx = ttx #txn interarrival time
         initLatency(n)
 
     def generate_network(self): #p2p network connection
@@ -74,16 +78,18 @@ class Simulation:
                 #print(len(self.nodes[nodeX].peers))
             #print(self.G.edges)
 
+    #adding edges of the peer graph
     def connection(self, nodeX, nodeY): #if x and y not connected then connect
         if(nodeY not in self.nodes[nodeX].peers and nodeX not in self.nodes[nodeY].peers):
             self.G.add_edge(nodeX, nodeY)
             self.nodes[nodeX].peers.add(self.nodes[nodeY])
             self.nodes[nodeY].peers.add(self.nodes[nodeX])
 
+    # initializing events and pushing to the queue - block and txn
     def gen_all_txn(self, max_time): #generate event
         for p in self.nodes:
             minetime = rng.exponential(p.miningTime)
-            block2mine = Block( #genesis block
+            block2mine = Block( #first mined block
                 pb=self.genesis,
                 bid=next(self.blkid_generator),
                 txnIncluded=set([Transaction(
@@ -95,10 +101,10 @@ class Simulation:
                 )]),
                 miner=p
             )
-            # add mining finish times to event queue
+            # adding block event to the queue
             heapq.heappush(eventq, (minetime, Event(minetime, "BlockMined", block=block2mine)))
             
-            # generate transactions based on the mean interarrival time
+            # generate txn and add to the queue
             t = rng.exponential(self.ttx)
             while(t < max_time):
                 elem = Transaction(
@@ -110,6 +116,7 @@ class Simulation:
                 heapq.heappush(eventq, (t, Event(t, "TxnGen", txn=elem)))
                 t = t + rng.exponential(self.ttx)
 
+    #running the simulation, running events from the queue and writing to file
     def run(self, untill): #simulate untill
         time = 0
         while(time < untill and len(eventq) > 0):
@@ -128,8 +135,8 @@ class Simulation:
                 file.write(log_to_write)
             file.close()
             
-
-    def handle(self, event): #event handler - push to queue
+    #just a switch case to handle events
+    def handle(self, event): #event handler 
         if event.event_type == "TxnGen":
             event.txn.peerX.txnSend(event)
         elif event.event_type == "TxnRecv":
@@ -139,6 +146,7 @@ class Simulation:
         elif event.event_type == "BlockMined":
             event.block.miner.receiveSelfMinedBlock(event)
 
+    #plot
     def draw_bc(self, nid, save=False):
         plt.figure()
         # draw network with Kamada Kawai layout
@@ -148,6 +156,7 @@ class Simulation:
         else:
             plt.show()
 
+    #save plot
     def print_graph(self, save=False): #print graph     
         plt.figure()
         nx.draw(self.G, with_labels=True)
@@ -158,6 +167,7 @@ class Simulation:
             
 
 if __name__ == "__main__":
+    #parse args
     parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
     parser.add_argument('-n', '--num_nodes', default=10, type=int, help='number of nodes in the P2P network')
     parser.add_argument('-z0', '--percentage_slow', default=0.5, type=float, help='percentage of slow nodes')
