@@ -26,3 +26,7 @@ To change various parameters usage as mentioned below
 For example `python3 main.py -n 10 -z0 0.5 -z1 0.5 -ttx 10 -I 1000 -T 10000 -s`
 
 To get help regarding any paramenter: `python3 main.py -h` will give the description on usage
+
+# Usage
+usage: `python3 main.py [-h] [-n NUM_NODES] [-z0 PERCENTAGE_SLOW] [-z1 PERCENTAGE_LOWCPU] [-ttx MEAN_INTER_ARRIVAL]
+               [-I AVERAGE_BLOCK_MINING_TIME] [-T SIMULATION_TIME] [-s]`
