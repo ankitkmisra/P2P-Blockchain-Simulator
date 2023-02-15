@@ -25,10 +25,10 @@ class Event:
     
 
 class Block:
-    time=0
     def __init__(self, bid, pbid, txnIncluded, miner, balance=[]):
         self.bid = bid # block id
         self.pbid = pbid #parent block id
+        self.time = 0
         self.size = 1 + len(txnIncluded) #size of block
         if pbid != 0: #to check if it is not genesis block
             # self.txnIncluded = copy.deepcopy(txnIncluded)
@@ -54,7 +54,7 @@ class Block:
 class Node:
     def __init__(self, nid, speed, cpu, genesis, miningTime, blkgen, txngen):
         self.peers = set() # neighbours of the node
-        self.blockChain = {} # blockchain of the node
+        self.blockChain = dict() # blockchain of the node
         self.blockReceived = set() # blocks received till now 
         self.txnReceived = set() # txn received till now 
         self.g = nx.DiGraph() # graph
@@ -90,9 +90,8 @@ class Node:
     # new block generation
     def mineNewBlock(self, block, lat):
         remaingTxn = self.txnReceived.difference(block.txnPool)
-        toBeDeleted = set()
+        toBeDeleted = set([i for i in remaingTxn if i.value > block.balance[i.peerX.nid]])
 
-        _ = [toBeDeleted.add(i) for i in remaingTxn if i.value > block.balance[i.peerX.nid]]
         remaingTxn = remaingTxn.difference(toBeDeleted)
         numTxn = len(remaingTxn)
         
@@ -142,6 +141,8 @@ class Node:
         event.block.time = event.time
 
         if event.block.length <= self.blockChain[self.lbid].length:
+            return
+        if not verifyBlock(event.block):
             return
 
         self.blockChain[event.block.bid] = event.block
