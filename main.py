@@ -50,9 +50,10 @@ class Simulation:
         ntype = ["honest" for i in range(h)]+["adversary"]
 
         #hashing power
-        invh0 = n*(10 - 9*z1)
-        invh1 = invh0/10
-        miningTime = [I*(1-a) if ntype[i] == "honest" else I*a for i in range(n)]
+        invh0 = n*(10 - 9*z1)/(1-a)
+        invh1 = invh0/10/(1-a)
+        miningTime = [I*invh0 if cpu[i] == "low" else I*invh1 for i in range(n-1)]
+        miningTime = miningTime + [I/a] #adversary
         
         self.nodes = [None]*n
         for i in range(n):
@@ -80,7 +81,7 @@ class Simulation:
                 l = rng.integers(4, 9)
                 if(self.nodes[nodeX].ntype=="adversary"):
                     l = self.zeta*(n-1)
-                #print(l)
+                print(l)
                 while len(self.nodes[nodeX].peers) < l:
                     nodeY = rng.choice([j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers]) 
                     if nodeY != nodeX:
@@ -250,11 +251,11 @@ class Simulation:
 if __name__ == "__main__":
     #parse args
     parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
-    parser.add_argument('-n', '--num_nodes', default=10, type=int, help='number of nodes in the P2P network')
+    parser.add_argument('-n', '--num_nodes', default=15, type=int, help='number of nodes in the P2P network')
     parser.add_argument('-a', '--alpha', default=0.1, type=int, help='adversary mining power')
     parser.add_argument('-z0', '--percentage_slow', default=0.5, type=float, help='percentage of slow nodes')
     parser.add_argument('-z1', '--percentage_lowcpu', default=0.5, type=float, help='percentage of nodes having low CPU power')
-    parser.add_argument('-zeta', '--zeta', default=0.5, type=float, help='percentage of honest nodes adversary node is connected to')
+    parser.add_argument('-zeta', '--zeta', default=1.0, type=float, help='percentage of honest nodes adversary node is connected to')
     parser.add_argument('-ttx', '--mean_inter_arrival', default=10, type=float, help='mean inter-arrival time between transactions')
     parser.add_argument('-I', '--average_block_mining_time', default=600, type=float, help='average time taken to mine a block')
     parser.add_argument('-T', '--simulation_time', default=10000, type=float, help='total time for which the P2P network is simulated')
