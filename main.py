@@ -234,24 +234,26 @@ class Simulation:
         if len(branches) > 0:
             print("Lengths of branches:", branches)
             print("Average length of branch:", round(np.average(branches), 3))
+        else:
+            print("No branches were formed!")
 
 
 if __name__ == "__main__":
     #parse args
     parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
     parser.add_argument('-n', '--num_nodes', default=10, type=int, help='number of nodes in the P2P network')
-    parser.add_argument('-z0', '--percentage_slow', default=0.5, type=float, help='percentage of slow nodes')
-    parser.add_argument('-z1', '--percentage_lowcpu', default=0.5, type=float, help='percentage of nodes having low CPU power')
+    parser.add_argument('-z0', '--fraction_slow', default=0.5, type=float, help='fraction of slow nodes')
+    parser.add_argument('-z1', '--fraction_lowcpu', default=0.5, type=float, help='fraction of nodes having low CPU power')
     parser.add_argument('-ttx', '--mean_inter_arrival', default=10, type=float, help='mean inter-arrival time between transactions')
-    parser.add_argument('-I', '--average_block_mining_time', default=600, type=float, help='average time taken to mine a block')
-    parser.add_argument('-T', '--simulation_time', default=10000, type=float, help='total time for which the P2P network is simulated')
+    parser.add_argument('-I', '--average_block_mining_time', default=100000, type=float, help='average time taken to mine a block')
+    parser.add_argument('-T', '--simulation_time', default=1000000, type=float, help='total time for which the P2P network is simulated')
     parser.add_argument('-s', '--save_figures', default=False, action='store_true', help='use this flag to save all figures generated in ./figures')
 
     args = parser.parse_args()
 
     num_nodes = args.num_nodes
-    percentage_slow = args.percentage_slow
-    percentage_lowcpu = args.percentage_lowcpu
+    percentage_slow = args.fraction_slow
+    percentage_lowcpu = args.fraction_lowcpu
     mean_inter_arrival = args.mean_inter_arrival
     average_block_mining_time = args.average_block_mining_time
     simulation_time = args.simulation_time
