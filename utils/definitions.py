@@ -49,7 +49,7 @@ class Block:
             self.balance[i.peerY.nid] += i.value
 
 class Node:
-    def __init__(self, nid, speed, cpu, genesis, miningTime, blkgen, txngen):
+    def __init__(self, nid, speed, cpu, ntype, genesis, miningTime, blkgen, txngen):
         self.peers = set() # neighbours of the node
         self.blockChain = dict() # blockchain of the node
         self.blockReceived = set() # blocks received till now 
@@ -57,6 +57,7 @@ class Node:
         self.g = nx.DiGraph() # graph
         self.nid = nid # unique id of the node 
         self.speed = speed # 1=fast, 0=slow
+        self.ntype = ntype #node type honest or adversary
         self.cpu = cpu
         self.lbid = genesis.bid
         # self.blockChain[genesis.bid] = copy.deepcopy(genesis)
