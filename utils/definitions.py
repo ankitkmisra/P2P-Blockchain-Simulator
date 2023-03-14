@@ -24,7 +24,7 @@ class Event:
 class Block:
     def __init__(self, bid, pb, txnIncluded, miner, balance=[]):
         self.bid = bid # block id
-        self.pb = pb #parent block id
+        self.pb = pb #parent block
         self.time = 0
         self.size = 1 + len(txnIncluded) #size of block
         if pb != 0: #to check if it is not genesis block
@@ -60,6 +60,9 @@ class Node:
         self.ntype = ntype #node type honest or adversary
         self.cpu = cpu
         self.lbid = genesis.bid
+        if ntype == "adversary":
+            self.revealed_bid = genesis.bid
+            self.child_ids = {}
         # self.blockChain[genesis.bid] = copy.deepcopy(genesis)
         self.blockChain[genesis.bid] = genesis
         self.blkid_generator = blkgen
@@ -123,43 +126,92 @@ class Node:
     # and then transmitted to neighbours 
     # If addition of that block creates a primary chain then mining is started over that block
     def verifyAndAddReceivedBlock(self, event):
-        if event.block.bid not in self.blockReceived:
-            self.blockReceived.add(event.block.bid)
-            if not verifyBlock(event.block):
-                return
+        if self.ntype == "honest":
+            if event.block.bid not in self.blockReceived:
+                self.blockReceived.add(event.block.bid)
+                if not verifyBlock(event.block):
+                    return
 
-            event.block.time = event.time
-            self.blockChain[event.block.bid] = event.block
-            self.g.add_edge(event.block.bid, event.block.pb.bid)
-            if event.block.length > self.blockChain[self.lbid].length:
-                self.lbid = event.block.bid
-                self.mineNewBlock(block=event.block, lat=event.time)
+                event.block.time = event.time
+                self.blockChain[event.block.bid] = event.block
+                self.g.add_edge(event.block.bid, event.block.pb.bid)
+                if event.block.length > self.blockChain[self.lbid].length:
+                    self.lbid = event.block.bid
+                    self.mineNewBlock(block=event.block, lat=event.time)
 
-            for i in self.peers:
-                lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
-                pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+                for i in self.peers:
+                    lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
+                    pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+        else:
+            if event.block.bid not in self.blockReceived:
+                self.blockReceived.add(event.block.bid)
+                if not verifyBlock(event.block):
+                    return
+
+                event.block.time = event.time
+                self.blockChain[event.block.bid] = event.block
+                self.g.add_edge(event.block.bid, event.block.pb.bid)
+                if event.block.length > self.blockChain[self.lbid].length:
+                    self.lbid = event.block.bid
+                    self.revealed_bid = event.block.bid
+                    self.mineNewBlock(block=event.block, lat=event.time)
+                elif event.block.length == self.blockChain[self.lbid].length - 1:
+                    print("Case 2")
+                    print(self.child_ids)
+                    print(self.blockChain[self.revealed_bid].length)
+                    print(self.blockChain[self.lbid].length)
+                    print(event.block.length)
+                    while self.revealed_bid != self.lbid:
+                        self.revealed_bid = self.child_ids[self.revealed_bid]
+                        for i in self.peers:
+                            lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
+                            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
+                else:
+                    print("Case 3")
+                    print(self.child_ids)
+                    print(self.blockChain[self.revealed_bid].length)
+                    print(self.blockChain[self.lbid].length)
+                    print(event.block.length)
+                    while self.blockChain[self.revealed_bid].length < event.block.length:
+                        self.revealed_bid = self.child_ids[self.revealed_bid]
+                        for i in self.peers:
+                            lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
+                            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
         
     # thsi function is called once the mining of a block is completed, 
     # If after mining the addition of block creates a primary chain then
     # the block is shared with neighbours and mining is continued otherwise 
     # node waits a block whose addition will, create primary chain
     def receiveSelfMinedBlock(self, event):
-        event.block.time = event.time
+        if self.ntype == "honest":
+            if event.block.length <= self.blockChain[self.lbid].length:
+                return
 
-        if event.block.length <= self.blockChain[self.lbid].length:
-            return
+            event.block.time = event.time
+            incr_blocks()
+            self.created_blocks_own += 1
 
-        incr_blocks()
-        self.created_blocks_own += 1
-
-        self.blockChain[event.block.bid] = event.block
-        self.g.add_edge(event.block.bid, event.block.pb.bid)
-        self.blockReceived.add(event.block.bid)
-        self.lbid = event.block.bid
-        for i in self.peers:
-            lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
-            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+            self.blockChain[event.block.bid] = event.block
+            self.g.add_edge(event.block.bid, event.block.pb.bid)
+            self.blockReceived.add(event.block.bid)
+            self.lbid = event.block.bid
+            for i in self.peers:
+                lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
+                pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
             self.mineNewBlock(block=event.block, lat=event.time)
+        else:
+            if event.block.length <= self.blockChain[self.lbid].length:
+                return
+
+            event.block.time = event.time
+            # incr_blocks()
+            self.created_blocks_own += 1
+
+            self.blockChain[event.block.bid] = event.block
+            self.g.add_edge(event.block.bid, event.block.pb.bid)
+            self.blockReceived.add(event.block.bid)
+            self.lbid = event.block.bid
+            self.child_ids[event.block.pb.bid] = event.block.bid
 
 
 class Transaction:
