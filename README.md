@@ -16,8 +16,8 @@ The results would get written down inside the figures and logs folders.
 
 To change various parameters usage as mentioned below
 * number of nodes in the P2P network: `-n` or `--num_nodes`
-* percentage of slow nodes: `-z0` or `--percentage_slow`
-* percentage of nodes having low CPU power: `-z1` or `--percentage_lowcpu`
+* percentage of slow nodes: `-z0` or `--fraction_slow`
+* percentage of nodes having low CPU power: `-z1` or `--fraction_lowcpu`
 * mean inter-arrival time between transactions: `-ttx` or `--mean_inter_arrival`
 * average time taken to mine a block: `-I` or `--average_block_mining_time`
 * total time for which the P2P network is simulated: `-T` or `--simulation_time`
