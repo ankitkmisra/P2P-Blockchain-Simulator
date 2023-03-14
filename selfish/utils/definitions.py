@@ -1,5 +1,6 @@
 import copy
 import networkx as nx
+from collections import deque
 
 from utils.seed import rng
 from utils import verifyBlock, computeLatency, pushq, incr_blocks
@@ -53,6 +54,7 @@ class Node:
         self.peers = set() # neighbours of the node
         self.blockChain = dict() # blockchain of the node
         self.blockReceived = set() # blocks received till now
+        self.orphanBlocks = set() # blocks received whose parents have not been received yet
         self.txnReceived = set() # txn received till now 
         self.g = nx.DiGraph() # graph
         self.nid = nid # unique id of the node 
@@ -117,8 +119,8 @@ class Node:
             if verifyBlock(newBlock):
                 break
 
-        lat2 = lat + rng.exponential(self.miningTime) #takes mean not lambda
-        pushq(Event(lat2, event_type="BlockMined", block=newBlock))
+        lat = lat + rng.exponential(self.miningTime) #takes mean not lambda
+        pushq(Event(lat, event_type="BlockMined", block=newBlock))
 
 
     #this function is called, if block receives a node from its peers
@@ -131,38 +133,68 @@ class Node:
                 self.blockReceived.add(event.block.bid)
                 if not verifyBlock(event.block):
                     return
+                if event.block.pb.bid not in self.blockChain:
+                    self.orphanBlocks.add(event.block)
+                    return
 
-                event.block.time = event.time
-                self.blockChain[event.block.bid] = event.block
-                self.g.add_edge(event.block.bid, event.block.pb.bid)
-                if event.block.length > self.blockChain[self.lbid].length:
-                    self.lbid = event.block.bid
-                    self.mineNewBlock(block=event.block, lat=event.time)
+                orphanProcessing = deque()
+                orphanProcessing.append(event.block)
+                last_block = event.block
+                while len(orphanProcessing) > 0:
+                    curr_block = orphanProcessing.popleft()
+                    curr_block.time = event.time
+                    self.blockChain[curr_block.bid] = curr_block
+                    self.g.add_edge(curr_block.bid, curr_block.pb.bid)
+                    if curr_block.length > last_block.length:
+                        last_block = curr_block
+                    for i in self.peers:
+                        lat = event.time + computeLatency(peerX=self, peerY=i, m=curr_block.size)
+                        pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=curr_block))
+                    for orphanBlock in self.orphanBlocks.copy():
+                        if orphanBlock.pb.bid == curr_block.bid:
+                            self.orphanBlocks.remove(orphanBlock)
+                            orphanProcessing.append(orphanBlock)
 
-                for i in self.peers:
-                    lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
-                    pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+                if last_block.length > self.blockChain[self.lbid].length:
+                    self.lbid = last_block.bid
+                    self.mineNewBlock(block=last_block, lat=event.time)
+
         else:
             if event.block.bid not in self.blockReceived:
                 self.blockReceived.add(event.block.bid)
                 if not verifyBlock(event.block):
                     return
+                if event.block.pb.bid not in self.blockChain:
+                    self.orphanBlocks.add(event.block)
+                    return
 
-                event.block.time = event.time
-                self.blockChain[event.block.bid] = event.block
-                self.g.add_edge(event.block.bid, event.block.pb.bid)
-                if event.block.length > self.blockChain[self.lbid].length:
-                    self.lbid = event.block.bid
-                    self.revealed_bid = event.block.bid
-                    self.mineNewBlock(block=event.block, lat=event.time)
-                elif event.block.length == self.blockChain[self.lbid].length - 1:
+                orphanProcessing = deque()
+                orphanProcessing.append(event.block)
+                last_block = event.block
+                while len(orphanProcessing) > 0:
+                    curr_block = orphanProcessing.popleft()
+                    curr_block.time = event.time
+                    self.blockChain[curr_block.bid] = curr_block
+                    self.g.add_edge(curr_block.bid, curr_block.pb.bid)
+                    if curr_block.length > last_block.length:
+                        last_block = curr_block
+                    for orphanBlock in self.orphanBlocks.copy():
+                        if orphanBlock.pb.bid == curr_block.bid:
+                            self.orphanBlocks.remove(orphanBlock)
+                            orphanProcessing.append(orphanBlock)
+
+                if last_block.length > self.blockChain[self.lbid].length:
+                    self.lbid = last_block.bid
+                    self.revealed_bid = last_block.bid
+                    self.mineNewBlock(block=last_block, lat=event.time)
+                elif last_block.length == self.blockChain[self.lbid].length - 1:
                     while self.revealed_bid != self.lbid:
                         self.revealed_bid = self.child_ids[self.revealed_bid]
                         for i in self.peers:
                             lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
                             pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
                 else:
-                    while self.blockChain[self.revealed_bid].length < event.block.length:
+                    while self.blockChain[self.revealed_bid].length < last_block.length:
                         self.revealed_bid = self.child_ids[self.revealed_bid]
                         for i in self.peers:
                             lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)

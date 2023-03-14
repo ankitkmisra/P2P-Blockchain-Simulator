@@ -16,13 +16,15 @@ from utils import blkIdGen, txnIdGen, initLatency, eventq, get_blocks
 
 #The discrete event simulator
 class Simulation:
-    def __init__(self, n, ttx, z0, z1, I=600):
+    def __init__(self, n, a, ttx, z0, z1, zeta, I=600):
         """
         Initializes the simulation object
             n: Number of Nodes
+            a: Adversary mining power
             ttx: Mean inter-arrival time of transactions
             z0: Percentage of slow nodes
             z1: Percentage of low CPU nodes
+            zeta: Percentage of Honest Node connected to Adversary Node
             I: Average block mining time
         """
         #building the connection graph of peers
@@ -37,25 +39,36 @@ class Simulation:
         self.txnid_generator = txnIdGen()
         
         #speed and cpu as mentioned in the question
-        speed = ["slow" for i in range(int(n*z0))]+["fast" for i in range(n-int(n*z0))]
-        cpu = ["low" for i in range(int(n*z1))]+["high" for i in range(n-int(n*z1))]
+        h = n-1 #honest
+        speed = ["slow" for i in range(int(h*z0))] + ["fast" for i in range(h-int(h*z0))]
+        cpu = ["low" for i in range(int(h*z1))] + ["high" for i in range(h-int(h*z1))]
         rng.shuffle(speed)
         rng.shuffle(cpu)
+        
+        #adversary
+        speed = speed + ["fast"]
+        cpu = cpu + ["high"]
+        ntype = ["honest" for i in range(h)] + ["adversary"]
 
         #hashing power
-        invh0 = n*(10 - 9*z1)
+        invh0 = n*(10 - 9*z1)/(1-a)
         invh1 = invh0/10
-        miningTime = [I*invh0 if cpu[i] == "low" else I*invh1 for i in range(n)]
+        miningTime = [I*invh0 if cpu[i] == "low" else I*invh1 for i in range(h)]
+        miningTime = miningTime + [I/a] #adversary
+
+        # print(miningTime)
         
         self.nodes = [None]*n
         for i in range(n):
-            self.nodes[i] = Node(nid=i, speed=speed[i], cpu=cpu[i],
+            self.nodes[i] = Node(nid=i, speed=speed[i], cpu=cpu[i], ntype = ntype[i],
                                  genesis=self.genesis, miningTime=miningTime[i],
                                  blkgen=self.blkid_generator,
                                  txngen=self.txnid_generator)
 
         self.ttx = ttx
         self.I = I
+        self.a = a
+        self.zeta = zeta
         initLatency(n)
 
     def generate_network(self): #p2p network connection
@@ -69,7 +82,9 @@ class Simulation:
             # generate random connections
             for nodeX in range(n):
                 l = rng.integers(4, 9)
-                #print(l)
+                if self.nodes[nodeX].ntype == "adversary":
+                    l = self.zeta*(n-1)
+                # print(l)
                 while len(self.nodes[nodeX].peers) < l:
                     nodeY = rng.choice([j for j in range(n) if j != nodeX and j not in self.nodes[nodeX].peers]) 
                     if nodeY != nodeX:
@@ -160,6 +175,7 @@ class Simulation:
             plt.savefig(f'./figures/blockchain_{nid}.png')
         else:
             plt.show()
+        plt.close()
 
     #save plot
     def print_graph(self, save=False): #print graph     
@@ -169,6 +185,7 @@ class Simulation:
             plt.savefig('./figures/network_graph.png')
         else:
             plt.show()
+        plt.close()
 
     def print_stats(self):
         nd = self.nodes[0]
@@ -241,19 +258,23 @@ class Simulation:
 if __name__ == "__main__":
     #parse args
     parser = argparse.ArgumentParser(description='a P2P network blockchain simulator')
-    parser.add_argument('-n', '--num_nodes', default=10, type=int, help='number of nodes in the P2P network')
+    parser.add_argument('-n', '--num_nodes', default=15, type=int, help='number of nodes in the P2P network')
+    parser.add_argument('-a', '--alpha', default=0.4, type=int, help='adversary mining power')
     parser.add_argument('-z0', '--percentage_slow', default=0.5, type=float, help='percentage of slow nodes')
-    parser.add_argument('-z1', '--percentage_lowcpu', default=0.5, type=float, help='percentage of nodes having low CPU power')
-    parser.add_argument('-ttx', '--mean_inter_arrival', default=10, type=float, help='mean inter-arrival time between transactions')
-    parser.add_argument('-I', '--average_block_mining_time', default=600, type=float, help='average time taken to mine a block')
-    parser.add_argument('-T', '--simulation_time', default=10000, type=float, help='total time for which the P2P network is simulated')
-    parser.add_argument('-s', '--save_figures', default=False, action='store_true', help='use this flag to save all figures generated in ./figures')
+    parser.add_argument('-z1', '--percentage_lowcpu', default=0, type=float, help='percentage of nodes having low CPU power')
+    parser.add_argument('-zeta', '--zeta', default=0.5, type=float, help='percentage of honest nodes adversary node is connected to')
+    parser.add_argument('-ttx', '--mean_inter_arrival', default=100, type=float, help='mean inter-arrival time between transactions')
+    parser.add_argument('-I', '--average_block_mining_time', default=1000, type=float, help='average time taken to mine a block')
+    parser.add_argument('-T', '--simulation_time', default=100000, type=float, help='total time for which the P2P network is simulated')
+    parser.add_argument('-s', '--save_figures', default=True, action='store_true', help='use this flag to save all figures generated in ./figures')
 
     args = parser.parse_args()
 
     num_nodes = args.num_nodes
+    alpha = args.alpha
     percentage_slow = args.percentage_slow
     percentage_lowcpu = args.percentage_lowcpu
+    zeta = args.zeta
     mean_inter_arrival = args.mean_inter_arrival
     average_block_mining_time = args.average_block_mining_time
     simulation_time = args.simulation_time
@@ -268,8 +289,8 @@ if __name__ == "__main__":
             shutil.rmtree('./figures')
         os.mkdir('./figures')
 
-    simulator = Simulation(num_nodes, mean_inter_arrival, percentage_slow,
-                           percentage_lowcpu, average_block_mining_time)
+    simulator = Simulation(num_nodes, alpha, mean_inter_arrival, percentage_slow,
+                           percentage_lowcpu, zeta, average_block_mining_time)
     
     simulator.generate_network()
     simulator.print_graph(save=save_figures)
