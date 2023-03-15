@@ -26,7 +26,6 @@ class Block:
     def __init__(self, bid, pb, txnIncluded, miner, balance=[]):
         self.bid = bid # block id
         self.pb = pb #parent block
-        self.time = 0
         self.size = 1 + len(txnIncluded) #size of block
         if pb != 0: #to check if it is not genesis block
             # self.txnIncluded = copy.deepcopy(txnIncluded)
@@ -54,6 +53,8 @@ class Node:
         self.peers = set() # neighbours of the node
         self.blockChain = dict() # blockchain of the node
         self.blockReceived = set() # blocks received till now
+        self.blockTime = dict() # time at which each block arrived
+        self.blockTime[1] = 0
         self.orphanBlocks = set() # blocks received whose parents have not been received yet
         self.txnReceived = set() # txn received till now 
         self.g = nx.DiGraph() # graph
@@ -65,6 +66,7 @@ class Node:
         if ntype == "adversary":
             self.revealed_bid = genesis.bid
             self.child_ids = {}
+            self.zero_prime = False
         # self.blockChain[genesis.bid] = copy.deepcopy(genesis)
         self.blockChain[genesis.bid] = genesis
         self.blkid_generator = blkgen
@@ -86,7 +88,7 @@ class Node:
             
 
     # forwards transactions
-    def txnRecv(self,event):
+    def txnRecv(self, event):
         if event.txn not in self.txnReceived:
             self.txnReceived.add(event.txn)
             for i in self.peers:
@@ -142,7 +144,7 @@ class Node:
                 last_block = event.block
                 while len(orphanProcessing) > 0:
                     curr_block = orphanProcessing.popleft()
-                    curr_block.time = event.time
+                    self.blockTime[curr_block.bid] = event.time
                     self.blockChain[curr_block.bid] = curr_block
                     self.g.add_edge(curr_block.bid, curr_block.pb.bid)
                     if curr_block.length > last_block.length:
@@ -173,7 +175,7 @@ class Node:
                 last_block = event.block
                 while len(orphanProcessing) > 0:
                     curr_block = orphanProcessing.popleft()
-                    curr_block.time = event.time
+                    self.blockTime[curr_block.bid] = event.time
                     self.blockChain[curr_block.bid] = curr_block
                     self.g.add_edge(curr_block.bid, curr_block.pb.bid)
                     if curr_block.length > last_block.length:
@@ -184,9 +186,18 @@ class Node:
                             orphanProcessing.append(orphanBlock)
 
                 if last_block.length > self.blockChain[self.lbid].length:
+                    if self.zero_prime:
+                        self.zero_prime = False
                     self.lbid = last_block.bid
                     self.revealed_bid = last_block.bid
                     self.mineNewBlock(block=last_block, lat=event.time)
+                elif last_block.length == self.blockChain[self.lbid].length:
+                    while self.revealed_bid != self.lbid:
+                        self.revealed_bid = self.child_ids[self.revealed_bid]
+                        for i in self.peers:
+                            lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
+                            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
+                    self.zero_prime = True
                 elif last_block.length == self.blockChain[self.lbid].length - 1:
                     while self.revealed_bid != self.lbid:
                         self.revealed_bid = self.child_ids[self.revealed_bid]
@@ -208,11 +219,11 @@ class Node:
         if self.ntype == "honest":
             if event.block.length <= self.blockChain[self.lbid].length:
                 return
-
-            event.block.time = event.time
+            
             incr_blocks()
             self.created_blocks_own += 1
 
+            self.blockTime[event.block.bid] = event.time
             self.blockChain[event.block.bid] = event.block
             self.g.add_edge(event.block.bid, event.block.pb.bid)
             self.blockReceived.add(event.block.bid)
@@ -225,15 +236,20 @@ class Node:
             if event.block.length <= self.blockChain[self.lbid].length:
                 return
 
-            event.block.time = event.time
-            # incr_blocks()
+            incr_blocks()
             self.created_blocks_own += 1
 
+            self.blockTime[event.block.bid] = event.time
             self.blockChain[event.block.bid] = event.block
             self.g.add_edge(event.block.bid, event.block.pb.bid)
             self.blockReceived.add(event.block.bid)
             self.lbid = event.block.bid
             self.child_ids[event.block.pb.bid] = event.block.bid
+            if self.zero_prime:
+                for i in self.peers:
+                    lat = event.time + computeLatency(peerX=self, peerY=i, m=event.block.size)
+                    pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
+                self.zero_prime = False
             self.mineNewBlock(block=event.block, lat=event.time)
 
 

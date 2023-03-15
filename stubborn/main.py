@@ -151,7 +151,7 @@ class Simulation:
                 if block.pb != 0: #if parent and miner exists
                     parent = block.pb.bid
                     miner = block.miner.nid
-                log_to_write = f"Block Id:{block.bid}, Parent ID:{parent}, Miner ID:{miner}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                log_to_write = f"Block Id:{block.bid}, Parent ID:{parent}, Miner ID:{miner}, Txns:{len(block.txnIncluded)}, Time:{i.blockTime[block.bid]}\n"
                 file.write(log_to_write)
             file.close()
             
@@ -188,71 +188,25 @@ class Simulation:
         plt.close()
 
     def print_stats(self):
-        nd = self.nodes[0]
+        nd = self.nodes[-1] # adversary has all blocks
         genesis = 1
 
-        g_rev = nd.g.reverse()
-        succ = nx.dfs_successors(g_rev, source=genesis)
-        depth_from_root = {}
-        max_depth = {}
-        parent = {}
-        deepest_node = genesis
-
-        def dfs(u, par = None, dep = 0):
-            nonlocal g_rev, succ, depth_from_root, max_depth, parent, deepest_node
-            depth_from_root[u] = dep
-            max_depth[u] = dep
-            parent[u] = par
-            if dep > depth_from_root[deepest_node]:
-                deepest_node = u
-            if u not in succ:
-                return
-            for v in succ[u]:
-                dfs(v, u, dep + 1)
-                max_depth[u] = max(max_depth[u], max_depth[v])
-        dfs(genesis)
-
-        branches = []
-        while deepest_node != genesis:
-            child = deepest_node
-            deepest_node = parent[deepest_node]
-            for u in succ[deepest_node]:
-                if u != child:
-                    branches.append(max_depth[u] - depth_from_root[deepest_node])
-
-        node_type_successful = {}
-        node_type_blocks_mined = {}
-        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
-            node_type_successful[type] = 0
-            node_type_blocks_mined[type] = 0
-        mined_in_longest_chain = {}
-        for node in self.nodes:
-            mined_in_longest_chain[node.nid] = 0
-            node_type_blocks_mined[node.speed + '_' + node.cpu] += node.created_blocks_own
+        adversary_mined_in_longest_chain = 0
         block = nd.blockChain[nd.lbid]
         while block.bid != genesis:
-            mined_in_longest_chain[block.miner.nid] += 1
-            node_type_successful[block.miner.speed + '_' + block.miner.cpu] += 1
+            if block.miner.nid == nd.nid:
+                adversary_mined_in_longest_chain += 1
             block = block.pb
 
-        print("Length of longest chain (including genesis block):", nd.blockChain[nd.lbid].length)
+        print("Length of longest chain (excluding genesis block):", nd.blockChain[nd.lbid].length-1)
         print("Total number of blocks mined:", get_blocks())
-        print("Fraction of mined blocks present in longest chain:", round((nd.blockChain[nd.lbid].length-1) / get_blocks(), 3))
+        print("MPU node overall:", round((nd.blockChain[nd.lbid].length - 1) / get_blocks(), 3))
         print()
-        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
-            print(f"% blocks in longest chain mined by {type} node:", round(node_type_successful[type] / (nd.blockChain[nd.lbid].length-1), 2))
+        print("Number of adversary blocks in the main chain:", adversary_mined_in_longest_chain)
+        print("Number of blocks mined by adversary:", nd.created_blocks_own)
+        print("MPU node adversary:", round(adversary_mined_in_longest_chain / nd.created_blocks_own, 3))
         print()
-        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
-            if node_type_blocks_mined[type] == 0:
-                print(f"% blocks mined by {type} node that made it to longest chain: 0.0")
-            else:
-                print(f"% blocks mined by {type} node that made it to longest chain:", round(node_type_successful[type] / node_type_blocks_mined[type], 2))
-        print()
-        if len(branches) > 0:
-            print("Lengths of branches:", branches)
-            print("Average length of branch:", round(np.average(branches), 3))
-        else:
-            print("No branches were formed!")
+        print("Fraction of adversary blocks in main chain:", round(adversary_mined_in_longest_chain / (nd.blockChain[nd.lbid].length-1), 3))
 
 
 if __name__ == "__main__":

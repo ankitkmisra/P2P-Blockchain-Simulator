@@ -136,7 +136,7 @@ class Simulation:
                 if block.pb != 0: #if parent and miner exists
                     parent = block.pb.bid
                     miner = block.miner.nid
-                log_to_write = f"Block Id:{block.bid}, Parent ID:{parent}, Miner ID:{miner}, Txns:{len(block.txnIncluded)}, Time:{block.time}\n"
+                log_to_write = f"Block Id:{block.bid}, Parent ID:{parent}, Miner ID:{miner}, Txns:{len(block.txnIncluded)}, Time:{i.blockTime[block.bid]}\n"
                 file.write(log_to_write)
             file.close()
             
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument('-ttx', '--mean_inter_arrival', default=10, type=float, help='mean inter-arrival time between transactions')
     parser.add_argument('-I', '--average_block_mining_time', default=600, type=float, help='average time taken to mine a block')
     parser.add_argument('-T', '--simulation_time', default=10000, type=float, help='total time for which the P2P network is simulated')
-    parser.add_argument('-s', '--save_figures', default=False, action='store_true', help='use this flag to save all figures generated in ./figures')
+    parser.add_argument('-s', '--save_figures', default=True, action='store_true', help='use this flag to save all figures generated in ./figures')
 
     args = parser.parse_args()
 
