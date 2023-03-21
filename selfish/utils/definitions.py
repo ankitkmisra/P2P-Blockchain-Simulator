@@ -226,7 +226,7 @@ class Node:
                 return
 
             event.block.time = event.time
-            # incr_blocks()
+            incr_blocks() #to calc total mined blocks including privates
             self.created_blocks_own += 1
 
             self.blockChain[event.block.bid] = event.block
