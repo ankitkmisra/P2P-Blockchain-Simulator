@@ -230,14 +230,14 @@ class Simulation:
         while deepest_node != genesis:
             child = deepest_node
             deepest_node = parent[deepest_node]
-            print(child, deepest_node, succ)
+            # print(child, deepest_node, succ)
             for u in succ[deepest_node]:
                 block = nd.blockChain[u]
                 if u != child:
                     branches.append(max_depth[u] - depth_from_root[deepest_node])
                 elif block.miner.nid == self.adversary:  #u is the child
                     ablocks+=[u]
-                print(block.miner.nid, ablocks)
+                # print(block.miner.nid, ablocks)
         adversary_mined_in_longest_chain = len(ablocks)
         
         node_type_successful = {}
