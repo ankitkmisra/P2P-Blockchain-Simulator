@@ -74,7 +74,9 @@ class Node:
         self.created_blocks_own = 0
 
     # generates transactions
-    def txnSend(self, event):
+    def txnSend(self, event, finish):
+        if finish:
+            return
         if self.blockChain[self.lbid].balance[self.nid] < 1e-8: 
             #if balance is less than 1e-8 then no txn is generated
             return
@@ -128,7 +130,7 @@ class Node:
     #block is verified and if the block is without any errors then its is added to blockchain 
     # and then transmitted to neighbours 
     # If addition of that block creates a primary chain then mining is started over that block
-    def verifyAndAddReceivedBlock(self, event):
+    def verifyAndAddReceivedBlock(self, event, finish):
         if self.ntype == "honest":
             if event.block.bid not in self.blockReceived:
                 self.blockReceived.add(event.block.bid)
@@ -184,7 +186,13 @@ class Node:
                             self.orphanBlocks.remove(orphanBlock)
                             orphanProcessing.append(orphanBlock)
 
-                if last_block.length > self.blockChain[self.lbid].length:
+                if finish:
+                    while self.revealed_bid != self.lbid:
+                        self.revealed_bid = self.child_ids[self.revealed_bid]
+                        for i in self.peers:
+                            lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
+                            pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
+                elif last_block.length > self.blockChain[self.lbid].length:
                     self.lbid = last_block.bid
                     self.revealed_bid = last_block.bid
                     self.mineNewBlock(block=last_block, lat=event.time)
@@ -199,8 +207,10 @@ class Node:
     # If after mining the addition of block creates a primary chain then
     # the block is shared with neighbours and mining is continued otherwise 
     # node waits a block whose addition will, create primary chain
-    def receiveSelfMinedBlock(self, event):
+    def receiveSelfMinedBlock(self, event, finish):
         if self.ntype == "honest":
+            if finish:
+                return
             if event.block.length <= self.blockChain[self.lbid].length:
                 return
 
@@ -217,6 +227,13 @@ class Node:
                 pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=event.block))
             self.mineNewBlock(block=event.block, lat=event.time)
         else:
+            if finish:
+                while self.revealed_bid != self.lbid:
+                    self.revealed_bid = self.child_ids[self.revealed_bid]
+                    for i in self.peers:
+                        lat = event.time + computeLatency(peerX=self, peerY=i, m=self.blockChain[self.revealed_bid].size)
+                        pushq(Event(lat, event_type="BlockRecv", sender=self, receiver=i, block=self.blockChain[self.revealed_bid]))
+                return
             if event.block.length <= self.blockChain[self.lbid].length:
                 return
 

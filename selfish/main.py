@@ -139,8 +139,7 @@ class Simulation:
             self.handle(event)
         while(len(eventq) > 0):
             time, event = heapq.heappop(eventq)
-            if event.event_type in ["TxnRecv", "BlockRecv"]:
-                self.handle(event)
+            self.handle(event, finish=True)
         
         for i in self.nodes: #each node
             file = open(f'./logs/log_tree_{i.nid}.txt', 'w+') #store in file
@@ -157,15 +156,15 @@ class Simulation:
             file.close()
             
     #just a switch case to handle events
-    def handle(self, event): #event handler 
+    def handle(self, event, finish=False): #event handler 
         if event.event_type == "TxnGen":
-            event.txn.peerX.txnSend(event)
+            event.txn.peerX.txnSend(event, finish)
         elif event.event_type == "TxnRecv":
             event.receiver.txnRecv(event)
         elif event.event_type == "BlockRecv":
-            event.receiver.verifyAndAddReceivedBlock(event)
+            event.receiver.verifyAndAddReceivedBlock(event, finish)
         elif event.event_type == "BlockMined":
-            event.block.miner.receiveSelfMinedBlock(event)
+            event.block.miner.receiveSelfMinedBlock(event, finish)
 
     #plot
     def draw_bc(self, nid, save=False):

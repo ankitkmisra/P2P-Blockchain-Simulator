@@ -1,0 +1,10 @@
+Data For Node Id: 4
+Block Id:1, Parent ID:None, Miner ID:None, Txns:0, Time:0
+Block Id:6, Parent ID:1, Miner ID:4, Txns:1, Time:483.72896383662555
+Block Id:82, Parent ID:6, Miner ID:46, Txns:1, Time:2145.7407864547376
+Block Id:169, Parent ID:82, Miner ID:11, Txns:1, Time:6138.059658988754
+Block Id:110, Parent ID:82, Miner ID:49, Txns:4, Time:6466.790214183502
+Block Id:176, Parent ID:110, Miner ID:49, Txns:2, Time:11106.195303348699
+Block Id:178, Parent ID:176, Miner ID:49, Txns:7, Time:11160.006721321284
+Block Id:181, Parent ID:178, Miner ID:49, Txns:3, Time:11160.006721321284
+Block Id:188, Parent ID:181, Miner ID:49, Txns:2, Time:11162.62932563431

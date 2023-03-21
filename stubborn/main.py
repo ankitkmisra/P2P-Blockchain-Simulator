@@ -69,6 +69,7 @@ class Simulation:
         self.I = I
         self.a = a
         self.zeta = zeta
+        self.adversary = n-1
         initLatency(n)
 
     def generate_network(self): #p2p network connection
@@ -138,8 +139,7 @@ class Simulation:
             self.handle(event)
         while(len(eventq) > 0):
             time, event = heapq.heappop(eventq)
-            if event.event_type in ["TxnRecv", "BlockRecv"]:
-                self.handle(event)
+            self.handle(event, finish=True)
         
         for i in self.nodes: #each node
             file = open(f'./logs/log_tree_{i.nid}.txt', 'w+') #store in file
@@ -156,15 +156,15 @@ class Simulation:
             file.close()
             
     #just a switch case to handle events
-    def handle(self, event): #event handler 
+    def handle(self, event, finish=False): #event handler 
         if event.event_type == "TxnGen":
-            event.txn.peerX.txnSend(event)
+            event.txn.peerX.txnSend(event, finish)
         elif event.event_type == "TxnRecv":
             event.receiver.txnRecv(event)
         elif event.event_type == "BlockRecv":
-            event.receiver.verifyAndAddReceivedBlock(event)
+            event.receiver.verifyAndAddReceivedBlock(event, finish)
         elif event.event_type == "BlockMined":
-            event.block.miner.receiveSelfMinedBlock(event)
+            event.block.miner.receiveSelfMinedBlock(event, finish)
 
     #plot
     def draw_bc(self, nid, save=False):
@@ -201,19 +201,77 @@ class Simulation:
         plt.close()
 
     def print_stats(self):
-        nd = self.nodes[-1] # adversary has all blocks
+        nd = self.nodes[self.adversary] #taking adversary point of view as its fast and more connected
         genesis = 1
 
-        adversary_mined_in_longest_chain = 0
+        g_rev = nd.g.reverse()
+        succ = nx.dfs_successors(g_rev, source=genesis)
+        depth_from_root = {}
+        max_depth = {}
+        parent = {}
+        deepest_node = genesis
+
+        def dfs(u, par = None, dep = 0):
+            nonlocal g_rev, succ, depth_from_root, max_depth, parent, deepest_node
+            depth_from_root[u] = dep
+            max_depth[u] = dep
+            parent[u] = par
+            if dep > depth_from_root[deepest_node]:
+                deepest_node = u
+            if u not in succ:
+                return
+            for v in succ[u]:
+                dfs(v, u, dep + 1)
+                max_depth[u] = max(max_depth[u], max_depth[v])
+        dfs(genesis)
+
+        branches = []
+        ablocks = []
+        while deepest_node != genesis:
+            child = deepest_node
+            deepest_node = parent[deepest_node]
+            print(child, deepest_node, succ)
+            for u in succ[deepest_node]:
+                block = nd.blockChain[u]
+                if u != child:
+                    branches.append(max_depth[u] - depth_from_root[deepest_node])
+                elif block.miner.nid == self.adversary:  #u is the child
+                    ablocks+=[u]
+                print(block.miner.nid, ablocks)
+        adversary_mined_in_longest_chain = len(ablocks)
+        
+        node_type_successful = {}
+        node_type_blocks_mined = {}
+        for type in ['slow_low', 'slow_high', 'fast_low', 'fast_high']:
+            node_type_successful[type] = 0
+            node_type_blocks_mined[type] = 0
+        mined_in_longest_chain = {}
+        for node in self.nodes:
+            mined_in_longest_chain[node.nid] = 0
+            node_type_blocks_mined[node.speed + '_' + node.cpu] += node.created_blocks_own
         block = nd.blockChain[nd.lbid]
-        while block.bid != genesis:
+        """while block.bid != genesis:
             if block.miner.nid == nd.nid:
                 adversary_mined_in_longest_chain += 1
-            block = block.pb
+            block = block.pb"""
 
-        print("Length of longest chain (excluding genesis block):", nd.blockChain[nd.lbid].length-1)
+        honest = 0.0
+        if(get_blocks() - nd.created_blocks_own):
+            honest = round((nd.blockChain[nd.lbid].length-1-len(ablocks)) / (get_blocks() - nd.created_blocks_own),3)   
+        attacker = 0.0
+        if(nd.created_blocks_own):
+            attacker = round(len(ablocks) / nd.created_blocks_own, 3)
+
+        print("Length of longest chain (including genesis block):", nd.blockChain[nd.lbid].length)
         print("Total number of blocks mined:", get_blocks())
-        print("MPU node overall:", round((nd.blockChain[nd.lbid].length - 1) / get_blocks(), 3))
+        print("Total number of blocks mined by honest miners:", get_blocks() - nd.created_blocks_own)
+        print("Total number of blocks mined by adversary:", nd.created_blocks_own)
+
+        print("Fraction of mined blocks present in longest chain (MPU_overall):", round((nd.blockChain[nd.lbid].length-1) / get_blocks(), 3))
+        print("Fraction of honest miner's blocks present in longest chain over total blocks mined by them (MPU_honest):", honest)
+        print("Fraction of adversary's mined blocks present in longest chain over total blocks mined by it (MPU_adv):", attacker)
+        print("Fraction of honest miner's blocks present in longest chain:", round((nd.blockChain[nd.lbid].length-1-len(ablocks)) / (nd.blockChain[nd.lbid].length-1), 3))
+        print("Fraction of adversary's mined blocks present in longest chain (Alpha_eff):", round(len(ablocks) / (nd.blockChain[nd.lbid].length-1), 3))
         print()
         print("Number of adversary blocks in the main chain:", adversary_mined_in_longest_chain)
         print("Number of blocks mined by adversary:", nd.created_blocks_own)
