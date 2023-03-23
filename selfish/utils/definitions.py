@@ -131,6 +131,7 @@ class Node:
     #block is verified and if the block is without any errors then its is added to blockchain 
     # and then transmitted to neighbours 
     # If addition of that block creates a primary chain then mining is started over that block
+    #the adversary and honest seperated by if statement
     def verifyAndAddReceivedBlock(self, event, finish):
         if self.ntype == "honest":
             if event.block.bid not in self.blockReceived:
@@ -172,6 +173,7 @@ class Node:
                     self.orphanBlocks.add(event.block)
                     return
 
+                #keeping track of orphans
                 orphanProcessing = deque()
                 orphanProcessing.append(event.block)
                 last_block = event.block
@@ -217,6 +219,7 @@ class Node:
     # If after mining the addition of block creates a primary chain then
     # the block is shared with neighbours and mining is continued otherwise 
     # node waits a block whose addition will, create primary chain
+    #the adversary and honest seperated by if statement
     def receiveSelfMinedBlock(self, event, finish):
         if self.ntype == "honest":
             if finish:
